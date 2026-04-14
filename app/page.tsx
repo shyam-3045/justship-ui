@@ -1,65 +1,370 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { motion } from "framer-motion";
+import {
+  Zap,
+  Globe,
+  Shield,
+  BarChart3,
+  GitBranch,
+  Code2,
+  ArrowRight,
+} from "lucide-react";
+import Link from "next/link";
+
+import { Navbar } from "@/components/navbar";
+import { Button } from "@/components/ui/button";
+import { PremiumCard } from "@/components/premium-card";
+import { FeatureCard } from "@/components/feature-card";
+import { SectionHeader } from "@/components/section-header";
+import { AnimatedCounter } from "@/components/animated-counter";
+import { ScrollReveal } from "@/components/scroll-reveal";
+import { fadeInUp, containerVariants } from "@/lib/animations";
+
+// Feature data
+const features = [
+  {
+    icon: <Zap className="size-6" />,
+    title: "Lightning Fast Deploys",
+    description:
+      "Deploy your frontend in seconds, not minutes. Optimized for speed and performance.",
+  },
+  {
+    icon: <Globe className="size-6" />,
+    title: "Global CDN",
+    description:
+      "Built-in CDN distributes your content worldwide for lightning-fast load times.",
+  },
+  {
+    icon: <Shield className="size-6" />,
+    title: "Enterprise Security",
+    description:
+      "SSL certificates, DDoS protection, and advanced security features out of the box.",
+  },
+  {
+    icon: <GitBranch className="size-6" />,
+    title: "Git Integration",
+    description:
+      "Auto-deploy on every push to GitHub. Works seamlessly with your workflow.",
+  },
+  {
+    icon: <BarChart3 className="size-6" />,
+    title: "Advanced Analytics",
+    description:
+      "Real-time metrics, error tracking, and performance insights for all deployments.",
+  },
+  {
+    icon: <Code2 className="size-6" />,
+    title: "Developer Friendly",
+    description:
+      "Simple CLI, comprehensive API, and excellent documentation for developers.",
+  },
+];
+
+// How it works steps
+const steps = [
+  {
+    number: "01",
+    title: "Connect Repository",
+    description:
+      "Link your GitHub repository with a single click. We'll monitor all your commits.",
+  },
+  {
+    number: "02",
+    title: "Automatic Deployments",
+    description:
+      "Every push triggers an automatic build and deployment to our global network.",
+  },
+  {
+    number: "03",
+    title: "Monitor & Scale",
+    description:
+      "Track performance metrics, manage versions, and scale as your app grows.",
+  },
+];
+
+const stats = [
+  { target: 100000, label: "Deployments", suffix: "+" },
+  { target: 50, label: "Countries", suffix: "+" },
+  { target: 99.99, label: "Uptime", suffix: "%" },
+];
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="min-h-screen bg-background bg-glow overflow-hidden">
+      {/* Navbar */}
+      <Navbar showBorder={true} />
+
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex items-center justify-center px-6 py-20 overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 bg-grid opacity-5 pointer-events-none" />
+        <motion.div
+          className="absolute top-20 left-10 h-96 w-96 rounded-full bg-foreground/10 blur-3xl"
+          animate={{ y: [0, 50, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+        <motion.div
+          className="absolute bottom-20 right-10 h-96 w-96 rounded-full bg-foreground/5 blur-3xl"
+          animate={{ y: [0, -50, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        {/* Hero Content */}
+        <motion.div
+          className="relative z-10 max-w-4xl mx-auto text-center space-y-8"
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+        >
+          {/* Badge */}
+          <motion.div
+            className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-4 py-2 backdrop-blur-sm"
+            variants={fadeInUp}
+            custom={0}
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span className="text-xs font-semibold text-foreground/80">
+              Now with Advanced Analytics
+            </span>
+          </motion.div>
+
+          {/* Main Heading */}
+          <motion.div className="space-y-4" variants={fadeInUp} custom={1}>
+            <h1 className="text-5xl font-bold leading-tight text-foreground md:text-6xl lg:text-7xl">
+              Deploy Your Frontend in Seconds
+            </h1>
+          </motion.div>
+
+          {/* Subheading */}
+          <motion.p
+            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+            variants={fadeInUp}
+            custom={2}
+          >
+            Lightning-fast deployments, global CDN, and enterprise security.
+            JustShip powers modern frontend teams worldwide.
+          </motion.p>
+
+          {/* CTA Buttons */}
+          <motion.div
+            className="flex flex-col sm:flex-row gap-4 justify-center pt-6"
+            variants={fadeInUp}
+            custom={3}
+          >
+            <Link href="/login">
+              <Button size="lg" className="gap-2 px-8 font-semibold">
+                Start Deploying
+                <ArrowRight className="size-4" />
+              </Button>
+            </Link>
+            <Button
+              size="lg"
+              variant="ghost"
+              className="gap-2 border border-border/60 text-foreground hover:bg-muted/60"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Watch Demo
+              <Code2 className="size-4" />
+            </Button>
+          </motion.div>
+
+          {/* Floating Cards */}
+          <motion.div className="pt-12" variants={fadeInUp} custom={4}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {["Deploy in <30s", "99.99% Uptime", "Global CDN"].map(
+                (stat, i) => (
+                  <PremiumCard key={i} className="text-center py-4">
+                    <p className="text-sm font-semibold text-muted-foreground">
+                      {stat}
+                    </p>
+                  </PremiumCard>
+                ),
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* Features Section */}
+      <section className="relative bg-gradient-to-b from-transparent via-muted/30 to-transparent px-6 py-20 md:py-32">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeader
+            title="Everything You Need"
+            subtitle="Features"
+            description="Powerful tools to deploy, monitor, and scale your frontend applications"
+            centered
+            gradient
+          />
+
+          <motion.div
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-16"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {features.map((feature, i) => (
+              <FeatureCard
+                key={i}
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+                index={i}
+              />
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="relative py-20 md:py-32 px-6">
+        <div className="max-w-4xl mx-auto">
+          <SectionHeader
+            title="How It Works"
+            subtitle="Getting Started"
+            description="Three simple steps to deploy your first application"
+            centered
+            gradient
+          />
+
+          <motion.div
+            className="mt-12 space-y-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {steps.map((step, index) => (
+              <motion.div key={index} variants={fadeInUp} custom={index}>
+                <div className="flex gap-6 md:gap-8">
+                  {/* Step Number */}
+                  <div className="flex-shrink-0">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted font-bold text-foreground text-xl">
+                      {step.number}
+                    </div>
+                  </div>
+
+                  {/* Step Content */}
+                  <div className="flex-grow pt-2">
+                    <h3 className="text-2xl font-bold text-foreground mb-3">
+                      {step.title}
+                    </h3>
+                    <p className="text-muted-foreground text-lg leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+
+                  {/* Arrow to next step */}
+                  {index < steps.length - 1 && (
+                    <motion.div
+                      className="hidden lg:flex items-end pb-4 text-muted-foreground"
+                      animate={{ y: [0, 10, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <ArrowRight className="size-6 rotate-90" />
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="relative bg-gradient-to-b from-transparent to-muted/30 px-6 py-20 md:py-32">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            className="grid md:grid-cols-3 gap-12"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {stats.map((stat, i) => (
+              <AnimatedCounter
+                key={i}
+                target={stat.target}
+                label={stat.label}
+                suffix={stat.suffix}
+                index={i}
+              />
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative py-20 md:py-32 px-6">
+        <motion.div
+          className="max-w-4xl mx-auto relative rounded-3xl overflow-hidden"
+          whileHover={{ scale: 1.02 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/10 to-foreground/5 blur-xl" />
+
+          <PremiumCard className="relative text-center py-16 md:py-20 px-8">
+            <motion.div
+              className="space-y-6"
+              initial="hidden"
+              whileInView="visible"
+              variants={containerVariants}
+              viewport={{ once: true, margin: "-100px" }}
             >
-              Learning
-            </a>{" "}
-            center.
+              <motion.h2
+                className="text-3xl font-bold text-foreground md:text-4xl"
+                variants={fadeInUp}
+                custom={0}
+              >
+                Ready to Deploy?
+              </motion.h2>
+              <motion.p
+                className="text-lg text-muted-foreground"
+                variants={fadeInUp}
+                custom={1}
+              >
+                Join thousands of developers deploying their web applications
+                with JustShip.
+              </motion.p>
+              <motion.div variants={fadeInUp} custom={2}>
+                <Link href="/login">
+                  <Button size="lg" className="font-semibold">
+                    Get Started Now
+                    <ArrowRight className="size-4" />
+                  </Button>
+                </Link>
+              </motion.div>
+            </motion.div>
+          </PremiumCard>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-background/70 py-12 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-sm text-muted-foreground mb-4">
+            © 2024 JustShip. All rights reserved.
           </p>
+          <div className="flex justify-center gap-6 text-xs text-muted-foreground">
+            <Link
+              href="/about"
+              className="hover:text-foreground transition-colors"
+            >
+              Credits
+            </Link>
+            <a href="#" className="hover:text-foreground transition-colors">
+              Documentation
+            </a>
+            <a href="#" className="hover:text-foreground transition-colors">
+              Blog
+            </a>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </footer>
+    </main>
   );
 }

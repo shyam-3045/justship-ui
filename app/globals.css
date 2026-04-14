@@ -1,26 +1,311 @@
 @import "tailwindcss";
 
 :root {
+  /* Light Mode - Pure Black & White */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000000;
+  --card: #f5f5f5;
+  --muted: #efefef;
+  --muted-foreground: #555555;
+  --border: #d0d0d0;
+
+  /* Accent Colors */
+  --accent-purple: #333333;
+  --accent-blue: #4a4a4a;
+  --accent-pink: #666666;
+
+  /* Status Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  /* Dark Mode - Luxury Rich Black */
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --card: #121212;
+  --muted: #1a1a1a;
+  --muted-foreground: #b0b0b0;
+  --border: #2a2a2a;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ==================== Glass Morphism Effects ==================== */
+.glass {
+  @apply bg-black/5 backdrop-blur-md border border-black/10 rounded-2xl shadow-xl;
+}
+
+.dark .glass {
+  @apply bg-white/8 backdrop-blur-2xl border border-white/15 shadow-2xl shadow-black/50;
+}
+
+.glass-subtle {
+  @apply bg-black/5 backdrop-blur-sm border border-black/10 rounded-xl;
+}
+
+.dark .glass-subtle {
+  @apply bg-white/5 backdrop-blur-sm border border-white/10;
+}
+
+.glass-luxury {
+  @apply bg-black/5 backdrop-blur-2xl border border-black/10 shadow-2xl;
+}
+
+.dark .glass-luxury {
+  @apply bg-white/8 backdrop-blur-3xl border border-white/15 shadow-2xl shadow-black/80;
+}
+
+.glass-hover {
+  @apply bg-black/5 backdrop-blur-xl hover:bg-black/10 transition-all duration-300;
+}
+
+.dark .glass-hover {
+  @apply bg-white/8 hover:bg-white/12;
+}
+
+/* ==================== Gradient Effects ==================== */
+.dark .gradient-text {
+  @apply bg-gradient-to-r from-white via-white/80 to-white/60 bg-clip-text text-transparent;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-black via-black/80 to-black/60 bg-clip-text text-transparent;
+}
+
+.gradient-border {
+  @apply relative rounded-2xl before:absolute before:inset-0 before:rounded-2xl before:p-0.5 before:bg-gradient-to-r before:from-white/30 before:to-white/20 before:-z-10;
+}
+
+.dark .gradient-border {
+  @apply relative rounded-2xl before:absolute before:inset-0 before:rounded-2xl before:p-0.5 before:bg-gradient-to-r before:from-white/20 before:to-white/10 before:-z-10;
+}
+
+.bg-premium-gradient {
+  background: linear-gradient(135deg, var(--background) 0%, rgba(255, 255, 255, 0.05) 100%);
+}
+
+.dark .bg-premium-gradient {
+  background: linear-gradient(135deg, #0a0a0a 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
+/* ==================== Custom Backgrounds ==================== */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.bg-glow {
+  background:
+    radial-gradient(circle at 20% 10%, rgb(255 255 255 / 0.08), transparent 42%),
+    radial-gradient(circle at 80% 20%, rgb(255 255 255 / 0.05), transparent 40%),
+    radial-gradient(circle at 50% 90%, rgb(255 255 255 / 0.03), transparent 44%);
+}
+
+.dark .bg-glow {
+  background:
+    radial-gradient(circle at 20% 10%, rgb(255 255 255 / 0.08), transparent 42%),
+    radial-gradient(circle at 80% 20%, rgb(255 255 255 / 0.05), transparent 40%),
+    radial-gradient(circle at 50% 90%, rgb(255 255 255 / 0.02), transparent 44%);
+}
+
+.bg-luxury-glow {
+  background:
+    radial-gradient(circle at 20% 50%, rgb(255 255 255 / 0.08), transparent 50%),
+    radial-gradient(circle at 100% 50%, rgb(255 255 255 / 0.04), transparent 50%);
+}
+
+.dark .bg-luxury-glow {
+  background:
+    radial-gradient(circle at 20% 50%, rgb(255 255 255 / 0.06), transparent 50%),
+    radial-gradient(circle at 100% 50%, rgb(255 255 255 / 0.02), transparent 50%);
+}
+
+/* ==================== Animations ==================== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes scales-hover {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.05);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-fadeInDown {
+  animation: fadeInDown 0.6s ease-out;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.6s ease-out;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.6s ease-out;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ==================== Utility Classes ==================== */
+.border-glow {
+  @apply border border-black/10 shadow-lg shadow-black/10;
+}
+
+.dark .border-glow {
+  @apply border border-white/15 shadow-lg shadow-white/5;
+}
+
+.shadow-glow {
+  @apply shadow-lg shadow-black/10;
+}
+
+.dark .shadow-glow {
+  @apply shadow-lg shadow-white/10;
+}
+
+.hover-lift {
+  @apply transition-all duration-300 hover:shadow-2xl hover:shadow-black/10 hover:-translate-y-1;
+}
+
+.dark .hover-lift {
+  @apply transition-all duration-300 hover:shadow-2xl hover:shadow-black/50 hover:-translate-y-1;
+}
+
+.transition-smooth {
+  @apply transition-all duration-300 ease-out;
+}
+
+/* ==================== Text & Typography ==================== */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-semibold tracking-tight;
+}
+
+h1 {
+  @apply text-4xl md:text-6xl font-bold leading-tight;
+}
+
+h2 {
+  @apply text-3xl md:text-4xl font-bold leading-snug;
+}
+
+h3 {
+  @apply text-xl md:text-2xl font-semibold;
+}
+
+/* ==================== Scrollbar Styling ==================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
 }
