@@ -59,9 +59,9 @@ export default function AboutPage() {
         {/* Background Elements */}
         <div className="absolute inset-0 bg-grid opacity-5 pointer-events-none" />
         <motion.div
-          className="absolute top-20 left-10 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"
+          className="absolute top-20 left-10 w-96 h-96 bg-foreground/5 rounded-full blur-3xl"
           animate={{ y: [0, 50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 8, repeat: Infinity, ease: [0.645, 0.045, 0.355, 1] }}
         />
 
         {/* Hero Content */}
@@ -72,13 +72,13 @@ export default function AboutPage() {
           transition={{ duration: 0.6 }}
         >
           <motion.div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 backdrop-blur-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/60 bg-muted/40 backdrop-blur-sm"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <Sparkles className="size-4 text-purple-300" />
-            <span className="text-xs font-semibold text-purple-300">
+            <Sparkles className="size-4 text-muted-foreground" />
+            <span className="text-xs font-semibold text-muted-foreground">
               About JustShip
             </span>
           </motion.div>
@@ -89,7 +89,7 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <span className="bg-gradient-to-r from-foreground via-purple-400 to-blue-400 bg-clip-text text-transparent">
+            <span className="gradient-text">
               Empowering Developers{" "}
             </span>
             <span className="block">
@@ -114,9 +114,9 @@ export default function AboutPage() {
       <section className="relative py-20 md:py-32 px-6">
         <div className="max-w-4xl mx-auto">
           <ScrollReveal>
-            <PremiumCard className="border-purple-500/30 bg-purple-500/5">
+            <PremiumCard>
               <div className="space-y-6">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/30 to-blue-500/30 text-purple-300">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-foreground/10 to-foreground/5 text-muted-foreground">
                   <Sparkles className="size-6" />
                 </div>
                 <div>
@@ -138,7 +138,7 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-purple-900/5 to-transparent">
+      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
         <div className="max-w-7xl mx-auto">
           <SectionHeader
             title="Meet the Team"
@@ -158,13 +158,13 @@ export default function AboutPage() {
             {team.map((member, i) => (
               <motion.div key={i} variants={fadeInUp} custom={i}>
                 <PremiumCard hover gradient className="h-full flex flex-col">
-                  <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/30 to-blue-500/30 text-purple-300">
+                  <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-foreground/10 to-foreground/5 text-muted-foreground">
                     {member.icon}
                   </div>
                   <h3 className="text-2xl font-bold text-foreground mb-2">
                     {member.name}
                   </h3>
-                  <p className="text-sm font-semibold text-purple-400 mb-3">
+                  <p className="text-sm font-semibold text-muted-foreground mb-3">
                     {member.role}
                   </p>
                   <p className="text-muted-foreground leading-relaxed flex-grow">
@@ -235,7 +235,7 @@ export default function AboutPage() {
       </section>
 
       {/* Tech Stack Section */}
-      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent to-purple-900/10">
+      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent to-muted/40">
         <div className="max-w-4xl mx-auto">
           <SectionHeader
             title="Built With Modern Tech"
@@ -254,7 +254,7 @@ export default function AboutPage() {
           >
             {technologies.map((tech, i) => (
               <motion.div key={i} variants={fadeInUp} custom={i % 5}>
-                <PremiumCard className="px-4 py-2 text-sm font-medium text-purple-300">
+                <PremiumCard className="px-4 py-2 text-sm font-medium text-muted-foreground">
                   {tech}
                 </PremiumCard>
               </motion.div>
@@ -275,7 +275,7 @@ export default function AboutPage() {
                 centered
               />
 
-              <PremiumCard className="border-purple-500/30 bg-purple-500/5">
+              <PremiumCard>
                 <div className="space-y-6 text-center">
                   <p className="text-base text-muted-foreground leading-relaxed">
                     JustShip is a modern deployment platform built with
@@ -285,7 +285,7 @@ export default function AboutPage() {
                   </p>
 
                   <div className="space-y-3">
-                    <p className="text-sm font-semibold text-purple-300 uppercase tracking-widest">
+                    <p className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
                       Special thanks to:
                     </p>
                     <p className="text-muted-foreground">
@@ -298,7 +298,7 @@ export default function AboutPage() {
                 </div>
               </PremiumCard>
 
-              <PremiumCard className="border-blue-500/30 bg-blue-500/5">
+              <PremiumCard>
                 <div className="space-y-4">
                   <h3 className="text-2xl font-bold text-foreground">
                     Open Source & Community
@@ -313,7 +313,7 @@ export default function AboutPage() {
                       href="https://github.com"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
+                      className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <GitBranch className="size-5" />
                       <span>View on GitHub</span>
@@ -327,7 +327,7 @@ export default function AboutPage() {
       </section>
 
       {/* Contact Section */}
-      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-purple-900/5 to-transparent">
+      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
         <motion.div
           className="max-w-4xl mx-auto rounded-3xl overflow-hidden"
           whileHover={{ scale: 1.02 }}
@@ -361,10 +361,7 @@ export default function AboutPage() {
                 custom={2}
               >
                 <a href="mailto:contact@justship.dev">
-                  <Button
-                    size="lg"
-                    className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-                  >
+                  <Button size="lg" className="gap-2 font-semibold">
                     <Mail className="size-4" />
                     Email Us
                   </Button>

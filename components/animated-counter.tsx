@@ -35,7 +35,7 @@ export function AnimatedCounter({
     if (isInView) {
       animate(motionValue, target, {
         duration: 2.5,
-        ease: "easeOut",
+        ease: [0.16, 1, 0.3, 1],
       });
     }
   }, [isInView, motionValue, target]);

@@ -40,7 +40,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.4, ease: "easeOut" },
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
@@ -119,21 +119,21 @@ export default function DashboardPage() {
                   title: "Deployments",
                   value: "24",
                   label: "This month",
-                  color: "text-emerald-400",
+                  color: "text-emerald-700 dark:text-emerald-400",
                 },
                 {
                   icon: BarChart3,
                   title: "Uptime",
                   value: "99.99%",
                   label: "Last 30 days",
-                  color: "text-blue-400",
+                  color: "text-blue-700 dark:text-blue-400",
                 },
                 {
                   icon: Server,
                   title: "Active Sites",
                   value: "12",
                   label: "Running now",
-                  color: "text-purple-400",
+                  color: "text-purple-700 dark:text-purple-400",
                 },
               ].map((stat, i) => {
                 const Icon = stat.icon;

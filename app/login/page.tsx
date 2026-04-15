@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Code2, Mail, ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
@@ -32,10 +33,11 @@ export default function LoginPage() {
   const { user, loginWithGitHub, loginWithGoogle } = useAuth();
   const router = useRouter();
 
-  if (user) {
-    router.push("/dashboard");
-    return null;
-  }
+  useEffect(() => {
+    if (user) router.replace("/dashboard");
+  }, [user, router]);
+
+  if (user) return null;
 
   return (
     <div className="min-h-screen bg-background bg-glow overflow-hidden flex items-center justify-center px-6">
@@ -43,12 +45,20 @@ export default function LoginPage() {
       <motion.div
         className="absolute top-0 left-0 h-96 w-96 rounded-full bg-foreground/5 blur-3xl"
         animate={{ y: [0, -50, 0], x: [0, 50, 0] }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: [0.645, 0.045, 0.355, 1],
+        }}
       />
       <motion.div
         className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-foreground/5 blur-3xl"
         animate={{ y: [0, 50, 0], x: [0, -50, 0] }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: [0.645, 0.045, 0.355, 1],
+        }}
       />
 
       {/* Grid Background */}

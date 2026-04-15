@@ -102,12 +102,20 @@ export default function HomePage() {
         <motion.div
           className="absolute top-20 left-10 h-96 w-96 rounded-full bg-foreground/10 blur-3xl"
           animate={{ y: [0, 50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: [0.645, 0.045, 0.355, 1],
+          }}
         />
         <motion.div
           className="absolute bottom-20 right-10 h-96 w-96 rounded-full bg-foreground/5 blur-3xl"
           animate={{ y: [0, -50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: [0.645, 0.045, 0.355, 1],
+          }}
         />
 
         {/* Hero Content */}

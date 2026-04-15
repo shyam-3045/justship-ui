@@ -30,7 +30,9 @@ export const PremiumCard = React.forwardRef<HTMLDivElement, PremiumCardProps>(
     const baseStyles =
       "relative rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md p-6 transition-all duration-300";
 
-    const hoverStyles = hover ? "hover:border-border hover:bg-card/80 cursor-pointer" : "";
+    const hoverStyles = hover
+      ? "hover:border-border hover:bg-card/80 cursor-pointer"
+      : "";
 
     const finalClass = `${baseStyles} ${hoverStyles} ${className}`.trim();
 
