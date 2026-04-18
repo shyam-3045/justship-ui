@@ -1,16 +1,11 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-} from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useGetMe } from "@/hooks/customHooks/auth";
 import { toastSuccess } from "@/utils/toast";
-
 
 type AuthUser = {
   name: string;
@@ -29,6 +24,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useGetMe();
 
@@ -43,22 +39,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/github`;
   }, []);
 
-  
   const loginWithGoogle = useCallback(() => {
-    toastSuccess("Google login not implemented yet")
+    toastSuccess("Google login not implemented yet");
   }, []);
 
- 
   const logout = useCallback(async () => {
     try {
       await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
         withCredentials: true,
       });
-      router.push('/')
+
+      queryClient.setQueryData(["me"], null);
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+
+      router.push("/");
+      router.refresh();
     } catch (err) {
       console.error("Logout failed:", err);
     }
-  }, [router]);
+  }, [queryClient, router]);
 
   const value = useMemo(
     () => ({
@@ -68,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithGoogle,
       logout,
     }),
-    [user, isLoading, loginWithGitHub, loginWithGoogle, logout]
+    [user, isLoading, loginWithGitHub, loginWithGoogle, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

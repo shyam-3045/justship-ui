@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: FolderGit2 },
-  { href: "/deploy", label: "Deploy Using Repo URL", icon: Rocket },
+  { href: "/deployments", label: "My Deployments", icon: Rocket },
   { href: "/repos", label: "My Repos", icon: FolderGit2 },
 ];
 

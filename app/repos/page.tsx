@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Globe, Lock } from "lucide-react";
 import Link from "next/link";
 
 import { Navbar } from "@/components/navbar";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useGetRepos } from "@/hooks/customHooks/repos";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,34 +20,19 @@ type GitHubRepo = {
   name: string;
   private: boolean;
   html_url: string;
+  url?: string;
+  clone_url?: string;
+  ssh_url?: string;
 };
 
 export default function RepositoriesPage() {
   const { user, loading } = useAuth();
-  const [repositories, setRepositories] = useState<GitHubRepo[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchRepositories = async () => {
-      const response = await fetch(
-        "https://api.github.com/users/vercel/repos?per_page=12",
-        {
-          cache: "no-store",
-        },
-      );
-
-      if (!response.ok) {
-        setRepositories([]);
-        return;
-      }
-
-      const data = (await response.json()) as GitHubRepo[];
-      setRepositories(data);
-    };
-
-    fetchRepositories();
-  }, [user]);
+  const { data, isLoading, isError } = useGetRepos(Boolean(user));
+  const repositories: GitHubRepo[] = Array.isArray(data)
+    ? (data as GitHubRepo[])
+    : Array.isArray((data as { repos?: GitHubRepo[] } | undefined)?.repos)
+      ? ((data as { repos?: GitHubRepo[] }).repos ?? [])
+      : [];
 
   if (!loading && !user) {
     return (
@@ -85,41 +70,67 @@ export default function RepositoriesPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {isLoading && (
+              <p className="text-sm text-muted-foreground">
+                Loading repositories...
+              </p>
+            )}
+            {isError && (
+              <p className="text-sm text-destructive">
+                Could not load repositories. Please try again.
+              </p>
+            )}
             <div className="grid gap-3 md:grid-cols-2">
-              {repositories.map((repo) => (
-                <div
-                  key={repo.id}
-                  className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/30 p-4"
-                >
-                  <div>
-                    <p className="font-medium">{repo.name}</p>
-                    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                      {repo.private ? (
-                        <Lock className="size-3.5" />
-                      ) : (
-                        <Globe className="size-3.5" />
-                      )}
-                      {repo.private ? "private" : "public"}
+              {repositories.map((repo) =>
+                (() => {
+                  const deployRepoUrl =
+                    repo.html_url ||
+                    repo.clone_url ||
+                    repo.url ||
+                    repo.ssh_url ||
+                    "";
+
+                  return (
+                    <div
+                      key={repo.id}
+                      className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/30 p-4"
+                    >
+                      <div>
+                        <p className="font-medium">{repo.name}</p>
+                        <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                          {repo.private ? (
+                            <Lock className="size-3.5" />
+                          ) : (
+                            <Globe className="size-3.5" />
+                          )}
+                          {repo.private ? "private" : "public"}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={deployRepoUrl || "#"}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          View
+                        </a>
+                        <Link
+                          href={`/deploy?url=${encodeURIComponent(deployRepoUrl)}&projectName=${encodeURIComponent(repo.name)}`}
+                        >
+                          <Button size="sm">Deploy</Button>
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={repo.html_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      View
-                    </a>
-                    <Link
-                      href={`/deploy?url=${encodeURIComponent(repo.html_url)}&projectName=${encodeURIComponent(repo.name)}`}
-                    >
-                      <Button size="sm">Deploy</Button>
-                    </Link>
-                  </div>
-                </div>
-              ))}
+                  );
+                })(),
+              )}
             </div>
+            {!isLoading && !isError && repositories.length === 0 && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                No repositories found for this account.
+              </p>
+            )}
           </CardContent>
         </Card>
       </main>

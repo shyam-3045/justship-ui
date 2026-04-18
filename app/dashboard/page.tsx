@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import {
   Activity,
   ArrowUpRight,
   FolderGit2,
   GitBranch,
+  Trash2,
   Zap,
   Server,
   BarChart3,
@@ -24,7 +26,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { mockDeployments, type Deployment } from "@/lib/mock-data";
+
+type StoredDeployment = Deployment & {
+  ownerId?: string;
+  repoUrl?: string;
+};
+
+const deploymentsStorageKey = "justship-user-deployments";
 
 const easeOutExpo: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -50,6 +59,52 @@ const itemVariants: Variants = {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [myDeployments, setMyDeployments] = useState<StoredDeployment[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const raw = localStorage.getItem(deploymentsStorageKey);
+    if (!raw) {
+      // Seed with mock items for the current user until API integration is added.
+      const seeded = mockDeployments.map((item) => ({
+        ...item,
+        ownerId: user.name,
+      }));
+      localStorage.setItem(deploymentsStorageKey, JSON.stringify(seeded));
+      setMyDeployments(seeded);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as StoredDeployment[];
+      const owned = Array.isArray(parsed)
+        ? parsed.filter((item) => item.ownerId === user.name)
+        : [];
+      setMyDeployments(owned);
+    } catch {
+      setMyDeployments([]);
+    }
+  }, [user]);
+
+  const deploymentCount = useMemo(() => myDeployments.length, [myDeployments]);
+
+  const removeDeployment = (id: string) => {
+    if (!user) return;
+    const raw = localStorage.getItem(deploymentsStorageKey);
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw) as StoredDeployment[];
+      const next = Array.isArray(parsed)
+        ? parsed.filter((item) => item.id !== id)
+        : [];
+      localStorage.setItem(deploymentsStorageKey, JSON.stringify(next));
+      setMyDeployments(next.filter((item) => item.ownerId === user.name));
+    } catch {
+      // no-op: keep current in-memory list if storage format is invalid
+    }
+  };
 
   if (!user) {
     return (
@@ -124,8 +179,8 @@ export default function DashboardPage() {
                 {
                   icon: Zap,
                   title: "Deployments",
-                  value: "24",
-                  label: "This month",
+                  value: String(deploymentCount),
+                  label: "Your deployments",
                   color: "text-emerald-700 dark:text-emerald-400",
                 },
                 {
@@ -169,31 +224,6 @@ export default function DashboardPage() {
               })}
             </motion.div>
 
-            {/* New Deployment Card */}
-            <motion.div variants={itemVariants}>
-              <Card className="glass border-border/70">
-                <CardHeader>
-                  <CardTitle>New Deployment</CardTitle>
-                  <CardDescription>
-                    Fill deployment details and deploy using a repository URL.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-3 md:flex-row">
-                  <Input
-                    placeholder="https://github.com/org/repo"
-                    className="glass-subtle border-border/60 text-foreground placeholder:text-muted-foreground"
-                    defaultValue="https://github.com/vercel/next.js"
-                    readOnly
-                  />
-                  <Link href="/deploy">
-                    <Button variant="default" className="whitespace-nowrap">
-                      Deploy Using URL
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </motion.div>
-
             <motion.div variants={itemVariants}>
               <Card className="glass border-border/70">
                 <CardHeader>
@@ -213,38 +243,19 @@ export default function DashboardPage() {
               </Card>
             </motion.div>
 
-            {/* Recent Deployments */}
+            {/* My Deployments */}
             <motion.div variants={itemVariants}>
               <Card className="glass border-border/70">
                 <CardHeader>
-                  <CardTitle>Recent Deployments</CardTitle>
+                  <CardTitle>My Deployments</CardTitle>
                   <CardDescription>
-                    Your latest deployment history
+                    Only deployments created by your account
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {[
-                    {
-                      name: "my-portfolio-site",
-                      status: "success",
-                      time: "5 minutes ago",
-                      url: "https://my-portfolio.justship.dev",
-                    },
-                    {
-                      name: "ecommerce-frontend",
-                      status: "building",
-                      time: "12 minutes ago",
-                      url: "https://ecommerce.justship.dev",
-                    },
-                    {
-                      name: "dashboard-app",
-                      status: "success",
-                      time: "1 hour ago",
-                      url: "https://dashboard.justship.dev",
-                    },
-                  ].map((deployment, index) => (
+                  {myDeployments.map((deployment, index) => (
                     <motion.div
-                      key={deployment.name}
+                      key={deployment.id}
                       className="flex flex-col justify-between gap-3 rounded-2xl border border-border/60 bg-card/40 p-4 md:flex-row md:items-center transition-colors hover:bg-card/60"
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -256,10 +267,10 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <p className="font-medium text-foreground">
-                            {deployment.name}
+                            {deployment.projectName}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {deployment.time}
+                            {deployment.timestamp}
                           </p>
                         </div>
                       </div>
@@ -282,9 +293,30 @@ export default function DashboardPage() {
                           {deployment.url.split("//")[1]}
                           <ArrowUpRight className="w-3 h-3" />
                         </a>
+                        <Link
+                          href={`/deploy?url=${encodeURIComponent(deployment.repoUrl || deployment.url)}&projectName=${encodeURIComponent(deployment.projectName)}`}
+                        >
+                          <Button size="sm" variant="secondary">
+                            Re-deploy
+                          </Button>
+                        </Link>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => removeDeployment(deployment.id)}
+                        >
+                          <Trash2 className="size-4" />
+                          Remove
+                        </Button>
                       </div>
                     </motion.div>
                   ))}
+                  {myDeployments.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      No deployments yet. Start from My Repositories and deploy
+                      one.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>

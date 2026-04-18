@@ -1,7 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+import DeploySearchParams from "./DeploySearchParams";
 
 import { Navbar } from "@/components/navbar";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -24,6 +26,16 @@ type DeployFormState = {
   framework: string;
 };
 
+type StoredDeployment = {
+  id: string;
+  projectName: string;
+  status: "building" | "success" | "failed";
+  url: string;
+  timestamp: string;
+  ownerId: string;
+  repoUrl: string;
+};
+
 const initialFormState: DeployFormState = {
   url: "",
   buildPath: "",
@@ -34,26 +46,21 @@ const initialFormState: DeployFormState = {
 };
 
 const pendingDeployKey = "justship-pending-deploy";
+const deploymentsStorageKey = "justship-user-deployments";
 
 export default function DeployPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [form, setForm] = useState<DeployFormState>(initialFormState);
 
+  // ✅ Handle query params via Suspense component
+  const SearchParamsHandler = (
+    <Suspense fallback={null}>
+      <DeploySearchParams setForm={setForm} />
+    </Suspense>
+  );
+
   useEffect(() => {
-    const urlFromQuery = searchParams.get("url") || "";
-    const projectNameFromQuery = searchParams.get("projectName") || "";
-
-    if (urlFromQuery || projectNameFromQuery) {
-      setForm((prev) => ({
-        ...prev,
-        url: urlFromQuery || prev.url,
-        projectName: projectNameFromQuery || prev.projectName,
-      }));
-      return;
-    }
-
     const pendingRaw = localStorage.getItem(pendingDeployKey);
     if (!pendingRaw) return;
 
@@ -63,11 +70,13 @@ export default function DeployPage() {
     } catch {
       localStorage.removeItem(pendingDeployKey);
     }
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
+
     localStorage.removeItem(pendingDeployKey);
+
     setForm((prev) => ({
       ...prev,
       userId: prev.userId || user.name,
@@ -87,14 +96,44 @@ export default function DeployPage() {
       return;
     }
 
-    // Placeholder deployment trigger until backend deployment API is connected.
     const deploymentId = `dep_${Math.random().toString(36).slice(2, 8)}`;
-    router.push(`/deploy/${deploymentId}`);
+
+    const newDeployment: StoredDeployment = {
+      id: deploymentId,
+      projectName: form.projectName,
+      status: "building",
+      url: `https://${form.projectName || "app"}.justship.dev`,
+      timestamp: "just now",
+      ownerId: user.name,
+      repoUrl: form.url,
+    };
+
+    const existingRaw = localStorage.getItem(deploymentsStorageKey);
+    let existing: StoredDeployment[] = [];
+
+    if (existingRaw) {
+      try {
+        const parsed = JSON.parse(existingRaw);
+        if (Array.isArray(parsed)) existing = parsed;
+      } catch {
+        existing = [];
+      }
+    }
+
+    localStorage.setItem(
+      deploymentsStorageKey,
+      JSON.stringify([newDeployment, ...existing]),
+    );
+
+    router.push("/dashboard");
   };
 
   return (
     <div className="min-h-screen bg-background bg-glow">
+      {SearchParamsHandler}
+
       <Navbar />
+
       <main className="mx-auto w-full max-w-3xl px-6 py-8 lg:px-10">
         <Card className="glass border-border/70">
           <CardHeader>
@@ -104,6 +143,7 @@ export default function DeployPage() {
               deployment is triggered.
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form className="grid gap-4" onSubmit={onSubmit}>
               <Input
@@ -112,24 +152,28 @@ export default function DeployPage() {
                 placeholder="Repository URL"
                 required
               />
+
               <Input
                 value={form.buildPath}
                 onChange={(e) => updateField("buildPath", e.target.value)}
                 placeholder="Build Path (e.g. apps/web)"
                 required
               />
+
               <Input
                 value={form.env}
                 onChange={(e) => updateField("env", e.target.value)}
                 placeholder="Environment Variables (e.g. API_KEY=abc)"
                 required
               />
+
               <Input
                 value={form.projectName}
                 onChange={(e) => updateField("projectName", e.target.value)}
                 placeholder="Project Name"
                 required
               />
+
               <Input
                 value={form.userId}
                 onChange={(e) => updateField("userId", e.target.value)}
@@ -143,10 +187,9 @@ export default function DeployPage() {
                 className="h-10 rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground"
                 required
               >
-                <option value="next">Next.js</option>
-                <option value="react">React</option>
-                <option value="vite">Vite</option>
-                <option value="nuxt">Nuxt</option>
+                <option value="React">React (Vite / CRA)</option>
+                <option value="Vue">Vue</option>
+                <option value="html">Static HTML</option>
               </select>
 
               <div className="pt-2">

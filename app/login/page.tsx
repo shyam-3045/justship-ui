@@ -3,8 +3,10 @@
 import { motion, type Variants } from "framer-motion";
 import { Code2, Mail, ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Suspense } from "react";
+import LoginSearchParams from "./LoginSearchParams";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -35,19 +37,15 @@ const itemVariants: Variants = {
 export default function LoginPage() {
   const { user, loginWithGitHub, loginWithGoogle } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    if (!user) return;
-    const nextPath = searchParams.get("next");
-    router.replace(nextPath || "/dashboard");
-  }, [user, router, searchParams]);
 
   if (user) return null;
 
   return (
     <div className="min-h-screen bg-background overflow-hidden flex items-center justify-center px-6">
-      {/* Animated Background Elements */}
+      <Suspense fallback={null}>
+        <LoginSearchParams user={user} router={router} />
+      </Suspense>
+
       <motion.div
         className="absolute top-0 left-0 h-96 w-96 rounded-full bg-foreground/5 blur-3xl"
         animate={{ y: [0, -50, 0], x: [0, 50, 0] }}
