@@ -4,11 +4,13 @@ import { motion, type Variants } from "framer-motion";
 import {
   Activity,
   ArrowUpRight,
+  FolderGit2,
   GitBranch,
   Zap,
   Server,
   BarChart3,
 } from "lucide-react";
+import Link from "next/link";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Navbar } from "@/components/navbar";
@@ -54,7 +56,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-background bg-glow">
         <Navbar />
         <main className="mx-auto flex w-full max-w-7xl gap-6 px-6 py-8 lg:px-10">
-          <DashboardSidebar activeLabel="Projects" />
+          <DashboardSidebar activeLabel="Dashboard" />
           <section className="w-full">
             <Card className="glass">
               <CardHeader>
@@ -68,6 +70,9 @@ export default function DashboardPage() {
                 <p className="mb-6 text-muted-foreground">
                   Please login to access your dashboard.
                 </p>
+                <Link href="/login">
+                  <Button>Go To Login</Button>
+                </Link>
               </CardContent>
             </Card>
           </section>
@@ -80,7 +85,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background bg-glow">
       <Navbar />
       <main className="mx-auto flex w-full max-w-7xl gap-6 px-6 py-8 lg:px-10">
-        <DashboardSidebar activeLabel="Projects" />
+        <DashboardSidebar activeLabel="Dashboard" />
 
         <section className="w-full">
           <motion.div
@@ -170,7 +175,7 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle>New Deployment</CardTitle>
                   <CardDescription>
-                    Paste a GitHub repository URL to trigger a build
+                    Fill deployment details and deploy using a repository URL.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3 md:flex-row">
@@ -178,10 +183,32 @@ export default function DashboardPage() {
                     placeholder="https://github.com/org/repo"
                     className="glass-subtle border-border/60 text-foreground placeholder:text-muted-foreground"
                     defaultValue="https://github.com/vercel/next.js"
+                    readOnly
                   />
-                  <Button variant="default" className="whitespace-nowrap">
-                    Deploy
-                  </Button>
+                  <Link href="/deploy">
+                    <Button variant="default" className="whitespace-nowrap">
+                      Deploy Using URL
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card className="glass border-border/70">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FolderGit2 className="size-5" /> My Repositories
+                  </CardTitle>
+                  <CardDescription>
+                    Pick one of your repos and continue to deploy with URL
+                    pre-filled.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link href="/repos">
+                    <Button variant="secondary">Open My Repos</Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>

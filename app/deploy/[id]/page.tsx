@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { RefreshCw } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { LogsPanel } from "@/components/logs-panel";
 import { Navbar } from "@/components/navbar";
@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAuth } from "@/components/providers/auth-provider";
 import { mockBuildLogs, mockDeployments } from "@/lib/mock-data";
 
 const statusVariantMap = {
@@ -25,12 +26,23 @@ const statusVariantMap = {
 
 export default function DeployDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const deployment = useMemo(
     () =>
       mockDeployments.find((item) => item.id === params.id) ??
       mockDeployments[0],
     [params.id],
   );
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) router.replace("/login?next=/deploy");
+  }, [loading, user, router]);
+
+  if (loading || !user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background bg-glow">

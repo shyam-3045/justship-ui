@@ -18,11 +18,18 @@ export function Navbar({ showBorder = true }: NavbarProps) {
   const { user, loginWithGitHub, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/repos", label: "Repositories" },
-    { href: "/about", label: "About" },
-  ];
+  const navLinks = user
+    ? [
+        { href: "/", label: "Home" },
+        { href: "/about", label: "About" },
+        { href: "/dashboard", label: "Dashboard" },
+        { href: "/deploy", label: "Deploy Using Repo URL" },
+      ]
+    : [
+        { href: "/", label: "Home" },
+        { href: "/about", label: "About" },
+        { href: "/deploy", label: "Deploy Using Repo URL" },
+      ];
 
   return (
     <header

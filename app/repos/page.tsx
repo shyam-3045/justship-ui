@@ -1,8 +1,19 @@
-import { Lock, Globe } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Globe, Lock } from "lucide-react";
+import Link from "next/link";
 
 import { Navbar } from "@/components/navbar";
+import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 type GitHubRepo = {
   id: number;
@@ -11,21 +22,55 @@ type GitHubRepo = {
   html_url: string;
 };
 
-async function getRepositories() {
-  // Placeholder source until real OAuth token + user-specific API calls are wired in.
-  const response = await fetch("https://api.github.com/users/vercel/repos?per_page=12", {
-    next: { revalidate: 300 },
-  });
+export default function RepositoriesPage() {
+  const { user, loading } = useAuth();
+  const [repositories, setRepositories] = useState<GitHubRepo[]>([]);
 
-  if (!response.ok) {
-    return [] as GitHubRepo[];
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchRepositories = async () => {
+      const response = await fetch(
+        "https://api.github.com/users/vercel/repos?per_page=12",
+        {
+          cache: "no-store",
+        },
+      );
+
+      if (!response.ok) {
+        setRepositories([]);
+        return;
+      }
+
+      const data = (await response.json()) as GitHubRepo[];
+      setRepositories(data);
+    };
+
+    fetchRepositories();
+  }, [user]);
+
+  if (!loading && !user) {
+    return (
+      <div className="min-h-screen bg-background bg-glow">
+        <Navbar />
+        <main className="mx-auto w-full max-w-5xl px-6 py-8 lg:px-10">
+          <Card>
+            <CardHeader>
+              <CardTitle>Login Required</CardTitle>
+              <CardDescription>
+                Please login to view and deploy from your repositories.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/login?next=/repos">
+                <Button>Go To Login</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
   }
-
-  return (await response.json()) as GitHubRepo[];
-}
-
-export default async function RepositoriesPage() {
-  const repositories = await getRepositories();
 
   return (
     <div className="min-h-screen bg-background bg-glow">
@@ -33,9 +78,10 @@ export default async function RepositoriesPage() {
       <main className="mx-auto w-full max-w-7xl px-6 py-8 lg:px-10">
         <Card>
           <CardHeader>
-            <CardTitle>Repositories</CardTitle>
+            <CardTitle>My Repositories</CardTitle>
             <CardDescription>
-              Select a repository and ship a frontend deployment in one click.
+              Select a repository and continue to Deploy With URL with the repo
+              URL pre-filled.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -48,7 +94,11 @@ export default async function RepositoriesPage() {
                   <div>
                     <p className="font-medium">{repo.name}</p>
                     <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                      {repo.private ? <Lock className="size-3.5" /> : <Globe className="size-3.5" />}
+                      {repo.private ? (
+                        <Lock className="size-3.5" />
+                      ) : (
+                        <Globe className="size-3.5" />
+                      )}
                       {repo.private ? "private" : "public"}
                     </div>
                   </div>
@@ -61,7 +111,11 @@ export default async function RepositoriesPage() {
                     >
                       View
                     </a>
-                    <Button size="sm">Deploy</Button>
+                    <Link
+                      href={`/deploy?url=${encodeURIComponent(repo.html_url)}&projectName=${encodeURIComponent(repo.name)}`}
+                    >
+                      <Button size="sm">Deploy</Button>
+                    </Link>
                   </div>
                 </div>
               ))}

@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { FolderGit2, Rocket, Settings } from "lucide-react";
+import { FolderGit2, Rocket } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "Projects", icon: FolderGit2 },
-  { href: "/deploy/dep_7n3h9a", label: "Deployments", icon: Rocket },
-  { href: "/repos", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", icon: FolderGit2 },
+  { href: "/deploy", label: "Deploy Using Repo URL", icon: Rocket },
+  { href: "/repos", label: "My Repos", icon: FolderGit2 },
 ];
 
 type DashboardSidebarProps = {

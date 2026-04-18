@@ -4,10 +4,13 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
 } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import { useGetMe } from "@/hooks/customHooks/auth";
+import { toastSuccess } from "@/utils/toast";
+
 
 type AuthUser = {
   name: string;
@@ -16,57 +19,56 @@ type AuthUser = {
 
 type AuthContextValue = {
   user: AuthUser | null;
+  loading: boolean;
   loginWithGitHub: () => void;
   loginWithGoogle: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
-
-const USER_STORAGE_KEY = "justship-ui-user";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const router = useRouter();
 
-  useEffect(() => {
-    const persistedUser = window.localStorage.getItem(USER_STORAGE_KEY);
-    if (!persistedUser) return;
-    setUser(JSON.parse(persistedUser) as AuthUser);
-  }, []);
+  const { data, isLoading } = useGetMe();
+
+  const user: AuthUser | null = data
+    ? {
+        name: data.name,
+        avatarUrl: data.avatarUrl,
+      }
+    : null;
 
   const loginWithGitHub = useCallback(() => {
-    // Placeholder for real GitHub OAuth redirect/session handshake.
-    const mockUser: AuthUser = {
-      name: "shipped-dev",
-      avatarUrl: "https://avatars.githubusercontent.com/u/9919?s=200&v=4",
-    };
-    window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUser));
-    setUser(mockUser);
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/github`;
   }, []);
 
+  
   const loginWithGoogle = useCallback(() => {
-    // Placeholder for real Google OAuth redirect/session handshake.
-    const mockUser: AuthUser = {
-      name: "user",
-      avatarUrl: "https://lh3.googleusercontent.com/a/default-user-avatar",
-    };
-    window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockUser));
-    setUser(mockUser);
+    toastSuccess("Google login not implemented yet")
   }, []);
 
-  const logout = useCallback(() => {
-    window.localStorage.removeItem(USER_STORAGE_KEY);
-    setUser(null);
-  }, []);
+ 
+  const logout = useCallback(async () => {
+    try {
+      await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+        withCredentials: true,
+      });
+      router.push('/')
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  }, [router]);
 
   const value = useMemo(
     () => ({
       user,
+      loading: isLoading,
       loginWithGitHub,
       loginWithGoogle,
       logout,
     }),
-    [user, loginWithGitHub, loginWithGoogle, logout],
+    [user, isLoading, loginWithGitHub, loginWithGoogle, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

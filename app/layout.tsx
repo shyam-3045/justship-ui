@@ -5,6 +5,8 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/custom-theme-provider";
 
 import "./globals.css";
+import ReactQuery from "@/utils/queryProvider";
+import ToastProvider from "@/utils/toastProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +36,10 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground">
         <ThemeProvider>
+          <ReactQuery>
+          <ToastProvider/>
           <AuthProvider>{children}</AuthProvider>
+          </ReactQuery>
         </ThemeProvider>
       </body>
     </html>
