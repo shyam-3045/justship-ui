@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus, Trash2, AlertCircle } from "lucide-react";
 
 import DeploySearchParams from "./DeploySearchParams";
 
@@ -16,11 +17,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useDeployProject } from "@/hooks/customHooks/deploy";
+import { toastSuccess, toastFailure } from "@/utils/toast";
+
+type EnvVariable = {
+  key: string;
+  value: string;
+};
 
 type DeployFormState = {
   url: string;
   buildPath: string;
-  env: string;
+  env: EnvVariable[];
   projectName: string;
   userId: string;
   framework: string;
@@ -39,10 +47,10 @@ type StoredDeployment = {
 const initialFormState: DeployFormState = {
   url: "",
   buildPath: "",
-  env: "",
+  env: [],
   projectName: "",
   userId: "",
-  framework: "next",
+  framework: "react",
 };
 
 const pendingDeployKey = "justship-pending-deploy";
@@ -52,6 +60,8 @@ export default function DeployPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState<DeployFormState>(initialFormState);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const deployMutation = useDeployProject();
 
   // ✅ Handle query params via Suspense component
   const SearchParamsHandler = (
@@ -83,11 +93,40 @@ export default function DeployPage() {
     }));
   }, [user]);
 
-  const updateField = (key: keyof DeployFormState, value: string) => {
+  const updateField = (
+    key: keyof Omit<DeployFormState, "env">,
+    value: string,
+  ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const addEnvVariable = () => {
+    setForm((prev) => ({
+      ...prev,
+      env: [...prev.env, { key: "", value: "" }],
+    }));
+  };
+
+  const removeEnvVariable = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      env: prev.env.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateEnvVariable = (
+    index: number,
+    field: "key" | "value",
+    value: string,
+  ) => {
+    setForm((prev) => {
+      const newEnv = [...prev.env];
+      newEnv[index] = { ...newEnv[index], [field]: value };
+      return { ...prev, env: newEnv };
+    });
+  };
+
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!user) {
@@ -96,36 +135,83 @@ export default function DeployPage() {
       return;
     }
 
-    const deploymentId = `dep_${Math.random().toString(36).slice(2, 8)}`;
-
-    const newDeployment: StoredDeployment = {
-      id: deploymentId,
-      projectName: form.projectName,
-      status: "building",
-      url: `https://${form.projectName || "app"}.justship.dev`,
-      timestamp: "just now",
-      ownerId: user.name,
-      repoUrl: form.url,
-    };
-
-    const existingRaw = localStorage.getItem(deploymentsStorageKey);
-    let existing: StoredDeployment[] = [];
-
-    if (existingRaw) {
-      try {
-        const parsed = JSON.parse(existingRaw);
-        if (Array.isArray(parsed)) existing = parsed;
-      } catch {
-        existing = [];
-      }
+    if (!form.url || !form.buildPath || !form.projectName || !form.framework) {
+      toastFailure("Please fill in all required fields");
+      return;
     }
 
-    localStorage.setItem(
-      deploymentsStorageKey,
-      JSON.stringify([newDeployment, ...existing]),
-    );
+    setIsDeploying(true);
 
-    router.push("/dashboard");
+    try {
+      // Convert env array to object
+      const envObject: Record<string, string | number | boolean> = {};
+      form.env.forEach((variable) => {
+        if (variable.key && variable.value) {
+          envObject[variable.key] = variable.value;
+        }
+      });
+
+      const deployPayload: {
+        url: string;
+        buildPath: string;
+        projectName: string;
+        framework: string;
+        env?: Record<string, string | number | boolean>;
+      } = {
+        url: form.url,
+        buildPath: form.buildPath,
+        projectName: form.projectName.toLowerCase(),
+        framework: form.framework,
+        ...(Object.keys(envObject).length > 0 && { env: envObject }),
+      };
+
+      const response = await deployMutation.mutateAsync(deployPayload);
+
+      // Store deployment locally
+      const deploymentId =
+        response.deploymentId ||
+        `dep_${Math.random().toString(36).slice(2, 8)}`;
+      const cdnUrl =
+        response.cdnUrl || `https://${form.projectName}.just-ship.app`;
+
+      const newDeployment: StoredDeployment = {
+        id: deploymentId,
+        projectName: form.projectName,
+        status: "building",
+        url: cdnUrl,
+        timestamp: "just now",
+        ownerId: user.name,
+        repoUrl: form.url,
+      };
+
+      const existingRaw = localStorage.getItem(deploymentsStorageKey);
+      let existing: StoredDeployment[] = [];
+
+      if (existingRaw) {
+        try {
+          const parsed = JSON.parse(existingRaw);
+          if (Array.isArray(parsed)) existing = parsed;
+        } catch {
+          existing = [];
+        }
+      }
+
+      localStorage.setItem(
+        deploymentsStorageKey,
+        JSON.stringify([newDeployment, ...existing]),
+      );
+
+      toastSuccess("Deployment started successfully!");
+
+      // Navigate to logs page
+      router.push(
+        `/deploy/${deploymentId}?projectName=${encodeURIComponent(form.projectName)}&cdnUrl=${encodeURIComponent(cdnUrl)}`,
+      );
+    } catch (error) {
+      console.error("Deploy error:", error);
+      toastFailure("Failed to start deployment. Please try again.");
+      setIsDeploying(false);
+    }
   };
 
   return (
@@ -137,64 +223,155 @@ export default function DeployPage() {
       <main className="mx-auto w-full max-w-3xl px-6 py-8 lg:px-10">
         <Card className="glass border-border/70">
           <CardHeader>
-            <CardTitle>Deploy Your First App With URL</CardTitle>
+            <CardTitle>Deploy Your App</CardTitle>
             <CardDescription>
-              Add repository details and deploy. You must login before the
-              deployment is triggered.
+              Connect your GitHub repository and deploy with one click.
+              Configure your build settings and environment variables.
             </CardDescription>
           </CardHeader>
 
           <CardContent>
-            <form className="grid gap-4" onSubmit={onSubmit}>
-              <Input
-                value={form.url}
-                onChange={(e) => updateField("url", e.target.value)}
-                placeholder="Repository URL"
-                required
-              />
+            <form className="space-y-6" onSubmit={onSubmit}>
+              {/* Repository URL */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Repository URL <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={form.url}
+                  onChange={(e) => updateField("url", e.target.value)}
+                  placeholder="https://github.com/username/repo"
+                  required
+                />
+              </div>
 
-              <Input
-                value={form.buildPath}
-                onChange={(e) => updateField("buildPath", e.target.value)}
-                placeholder="Build Path (e.g. apps/web)"
-                required
-              />
+              {/* Project Name */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Project Name <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={form.projectName}
+                  onChange={(e) => updateField("projectName", e.target.value)}
+                  placeholder="my-awesome-app"
+                  required
+                />
+              </div>
 
-              <Input
-                value={form.env}
-                onChange={(e) => updateField("env", e.target.value)}
-                placeholder="Environment Variables (e.g. API_KEY=abc)"
-                required
-              />
+              {/* Build Path */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Build Path <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={form.buildPath}
+                  onChange={(e) => updateField("buildPath", e.target.value)}
+                  placeholder="e.g., frontend/form-builder or . for root"
+                  required
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  The subdirectory containing your app (use . for root)
+                </p>
+              </div>
 
-              <Input
-                value={form.projectName}
-                onChange={(e) => updateField("projectName", e.target.value)}
-                placeholder="Project Name"
-                required
-              />
+              {/* Framework */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  Framework <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={form.framework}
+                  onChange={(e) => updateField("framework", e.target.value)}
+                  className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground"
+                  required
+                >
+                  <option value="react">React (Vite / CRA)</option>
+                  <option value="next">Next.js</option>
+                  <option value="vue">Vue</option>
+                  <option value="html">Static HTML</option>
+                </select>
+              </div>
 
-              <Input
-                value={form.userId}
-                onChange={(e) => updateField("userId", e.target.value)}
-                placeholder="User ID"
-                required
-              />
+              {/* Environment Variables */}
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-foreground">
+                      Environment Variables
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Optional. Add environment variables needed for your app to
+                      run in production.
+                    </p>
+                  </div>
+                </div>
 
-              <select
-                value={form.framework}
-                onChange={(e) => updateField("framework", e.target.value)}
-                className="h-10 rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground"
-                required
-              >
-                <option value="React">React (Vite / CRA)</option>
-                <option value="Vue">Vue</option>
-                <option value="html">Static HTML</option>
-              </select>
+                {/* Info Box */}
+                <div className="flex gap-3 rounded-lg border border-orange-400/40 bg-orange-50/20 p-3 dark:bg-orange-950/30">
+                  <AlertCircle className="size-4 flex-shrink-0 text-orange-600 dark:text-orange-400 mt-0.5" />
+                  <p className="text-xs text-orange-700 dark:text-orange-300">
+                    Environment variables are optional. Only add variables that
+                    your app needs to run in production.
+                  </p>
+                </div>
 
+                {/* Environment Variables List */}
+                <div className="space-y-2">
+                  {form.env.map((variable, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        placeholder="Variable name (e.g., VITE_API_BASE_URL)"
+                        value={variable.key}
+                        onChange={(e) =>
+                          updateEnvVariable(index, "key", e.target.value)
+                        }
+                        className="flex-1"
+                      />
+                      <Input
+                        placeholder="Value"
+                        value={variable.value}
+                        onChange={(e) =>
+                          updateEnvVariable(index, "value", e.target.value)
+                        }
+                        className="flex-1"
+                        type="password"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeEnvVariable(index)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add Env Variable Button */}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={addEnvVariable}
+                  className="w-full"
+                >
+                  <Plus className="size-4" />
+                  Add Environment Variable
+                </Button>
+              </div>
+
+              {/* Deploy Button */}
               <div className="pt-2">
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {user ? "Deploy Now" : "Login To Deploy"}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading || isDeploying || deployMutation.isPending}
+                >
+                  {isDeploying || deployMutation.isPending
+                    ? "Deploying..."
+                    : "Deploy Now"}
                 </Button>
               </div>
             </form>

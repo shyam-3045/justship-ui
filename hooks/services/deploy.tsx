@@ -32,5 +32,12 @@ export const reDeployProject = async(data :{
     return res.data
 }
 
+export const getDeployments = async(data :{
+    projectId:string
+})=>
+{
+    const res=  await api.get(`/getDeployments/${data.projectId}`)
+    return res.data
+}
 
 

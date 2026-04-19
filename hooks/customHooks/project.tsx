@@ -6,7 +6,7 @@ interface data {
     projetId:string,
     version:number
 }
-export const useSetActiveversion = ()=>
+export const useSetActiveVersion = ()=>
 {
     return useMutation({
         mutationFn :(payload:data)=>
