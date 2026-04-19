@@ -1,5 +1,5 @@
-import { useMutation } from "@tanstack/react-query"
-import { setActiveVersion } from "../services/project"
+import { useMutation, useQuery } from "@tanstack/react-query"
+import { getProjects, setActiveVersion } from "../services/project"
 
 
 interface data {
@@ -14,5 +14,13 @@ export const useSetActiveversion = ()=>
 
         onSuccess:()=>
             console.log("version Changed Successfully !")
+    })
+}
+
+export const useGetProjects = ()=>
+{
+    return useQuery({
+        queryKey : ["projects"],
+        queryFn : getProjects
     })
 }

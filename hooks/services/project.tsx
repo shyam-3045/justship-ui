@@ -14,3 +14,8 @@ export const setActiveVersion = async(data:data)=>
 
     return res.data
 }
+export const getProjects = async()=>
+{
+    const res = await api.get ("/getProjects")
+    return  res.data
+}
