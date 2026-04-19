@@ -7,6 +7,7 @@ import Link from "next/link";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Navbar } from "@/components/navbar";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useTheme } from "@/components/providers/custom-theme-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +37,7 @@ interface Project {
   currentVersion: number;
   repoUrl: string;
   subfolder: string;
-  url:string;
+  url: string;
   createdAt: string;
 }
 
@@ -54,6 +55,7 @@ const deploymentsStorageKey = "justship-user-deployments";
 
 export default function DeploymentsPage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [deployments, setDeployments] = useState<StoredDeployment[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null,
@@ -96,9 +98,9 @@ export default function DeploymentsPage() {
   const handleRedeploy = async (projectId: string) => {
     try {
       await redeployMutation.mutateAsync({ projectId });
-      toastSuccess("Redeploy triggered successfully!");
+      toastSuccess("Redeploy triggered successfully!", theme);
     } catch (error) {
-      toastFailure("Failed to trigger redeploy");
+      toastFailure("Failed to trigger redeploy", theme);
       console.error(error);
     }
   };
@@ -221,7 +223,6 @@ export default function DeploymentsPage() {
           </Card>
 
           {/* Legacy Deployments Section */}
-          
 
           {/* Version Selection Modal */}
           {showVersionModal && (
@@ -264,10 +265,10 @@ function VersionModal({
         projetId: projectId,
         version,
       });
-      toastSuccess("Version changed successfully!");
+      toastSuccess("Version changed successfully!", theme);
       onClose();
     } catch (error) {
-      toastFailure("Failed to change version");
+      toastFailure("Failed to change version", theme);
       console.error(error);
     }
   };

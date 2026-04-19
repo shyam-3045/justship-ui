@@ -1,22 +1,24 @@
 import { Bounce, toast } from "react-toastify";
 
-const baseConfig = {
+type Theme = "light" | "dark";
+
+const getBaseConfig = (theme: Theme = "dark") => ({
   className: "toast-auto",
-  position: "top-center" as const,
+  position: "top-right" as const,
   autoClose: 3250,
   hideProgressBar: true,
   closeOnClick: true,
   pauseOnHover: false,
-  draggable: false,
+  draggable: true,
   progress: undefined,
-  theme: "light" as const,
+  theme,
   transition: Bounce,
-};
+});
 
-export function toastSuccess(msg: string) {
-  toast.success(msg, baseConfig);
+export function toastSuccess(msg: string, theme: Theme = "dark") {
+  toast.success(msg, getBaseConfig(theme));
 }
 
-export function toastFailure(msg: string) {
-  toast.error(msg, baseConfig);
+export function toastFailure(msg: string, theme: Theme = "dark") {
+  toast.error(msg, getBaseConfig(theme));
 }

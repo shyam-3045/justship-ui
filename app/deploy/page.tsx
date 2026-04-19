@@ -8,6 +8,7 @@ import DeploySearchParams from "./DeploySearchParams";
 
 import { Navbar } from "@/components/navbar";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useTheme } from "@/components/providers/custom-theme-provider";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -58,6 +59,7 @@ const deploymentsStorageKey = "justship-user-deployments";
 
 export default function DeployPage() {
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
   const router = useRouter();
   const [form, setForm] = useState<DeployFormState>(initialFormState);
   const [isDeploying, setIsDeploying] = useState(false);
@@ -136,7 +138,7 @@ export default function DeployPage() {
     }
 
     if (!form.url || !form.buildPath || !form.projectName || !form.framework) {
-      toastFailure("Please fill in all required fields");
+      toastFailure("Please fill in all required fields", theme);
       return;
     }
 
@@ -201,7 +203,7 @@ export default function DeployPage() {
         JSON.stringify([newDeployment, ...existing]),
       );
 
-      toastSuccess("Deployment started successfully!");
+      toastSuccess("Deployment started successfully!", theme);
 
       // Navigate to logs page
       router.push(
@@ -209,7 +211,7 @@ export default function DeployPage() {
       );
     } catch (error) {
       console.error("Deploy error:", error);
-      toastFailure("Failed to start deployment. Please try again.");
+      toastFailure("Failed to start deployment. Please try again.", theme);
       setIsDeploying(false);
     }
   };

@@ -4,12 +4,10 @@ import { motion, type Variants } from "framer-motion";
 import { Code2, Mail, ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { Suspense } from "react";
 import LoginSearchParams from "./LoginSearchParams";
 
 import { useAuth } from "@/components/providers/auth-provider";
-import { Button } from "@/components/ui/button";
 
 const easeOutExpo: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const easeInOut: [number, number, number, number] = [0.645, 0.045, 0.355, 1];

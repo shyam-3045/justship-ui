@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useGetMe } from "@/hooks/customHooks/auth";
 import { toastSuccess } from "@/utils/toast";
+import { useTheme } from "@/components/providers/custom-theme-provider";
 
 type AuthUser = {
   name: string;
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { theme } = useTheme();
 
   const { data, isLoading } = useGetMe();
 
@@ -40,8 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loginWithGoogle = useCallback(() => {
-    toastSuccess("Google login not implemented yet");
-  }, []);
+    toastSuccess("Google login not implemented yet", theme);
+  }, [theme]);
 
   const logout = useCallback(async () => {
     try {

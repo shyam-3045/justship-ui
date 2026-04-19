@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { LogsPanel } from "@/components/logs-panel";
 import { Navbar } from "@/components/navbar";
+import { useTheme } from "@/components/providers/custom-theme-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,7 @@ export default function DeployDetailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
   const redeployMutation = useRedeployHook();
 
   const projectName = searchParams.get("projectName") || "Deployment";
@@ -53,9 +55,9 @@ export default function DeployDetailPage() {
       // Extract projectId from the deployment or use a placeholder
       // In a real scenario, you'd get this from your backend
       await redeployMutation.mutateAsync({ projectId: params.id });
-      toastSuccess("Redeploy triggered successfully!");
+      toastSuccess("Redeploy triggered successfully!", theme);
     } catch (error) {
-      toastFailure("Failed to trigger redeploy");
+      toastFailure("Failed to trigger redeploy", theme);
       console.error(error);
     }
   };
