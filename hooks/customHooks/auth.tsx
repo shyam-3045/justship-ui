@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import { getMe } from "../services/auth"
 
 export const useGetMe = ()=>
@@ -8,3 +8,4 @@ export const useGetMe = ()=>
         queryFn:getMe
     })
 }
+

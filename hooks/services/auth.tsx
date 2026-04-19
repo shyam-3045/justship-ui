@@ -7,3 +7,4 @@ export const getMe = async()=>
     })
     return res.data
 }
+
