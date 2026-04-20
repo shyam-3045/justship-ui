@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, GitBranch, RefreshCw, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Navbar } from "@/components/navbar";
@@ -17,18 +18,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { type Deployment } from "@/lib/mock-data";
 import {
   useGetProjects,
   useSetActiveVersion,
 } from "@/hooks/customHooks/project";
 import { useRedeployHook, useGetDeployments } from "@/hooks/customHooks/deploy";
 import { toastSuccess, toastFailure } from "@/utils/toast";
-
-type StoredDeployment = Deployment & {
-  ownerId?: string;
-  repoUrl?: string;
-};
 
 interface Project {
   _id: string;
@@ -51,12 +46,12 @@ interface VersionDeployment {
   createdAt: string;
 }
 
-const deploymentsStorageKey = "justship-user-deployments";
+const activeDeploymentJobKey = "justship-active-deployment-job";
 
 export default function DeploymentsPage() {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const [deployments, setDeployments] = useState<StoredDeployment[]>([]);
+  const router = useRouter();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null,
   );
@@ -77,28 +72,35 @@ export default function DeploymentsPage() {
 
   useEffect(() => {
     if (!user) return;
-
-    const raw = localStorage.getItem(deploymentsStorageKey);
-    if (!raw) {
-      setDeployments([]);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as StoredDeployment[];
-      const owned = Array.isArray(parsed)
-        ? parsed.filter((item) => item.ownerId === user.name)
-        : [];
-      setDeployments(owned);
-    } catch {
-      setDeployments([]);
-    }
   }, [user]);
 
   const handleRedeploy = async (projectId: string) => {
     try {
-      await redeployMutation.mutateAsync({ projectId });
-      toastSuccess("Redeploy triggered successfully!", theme);
+      const response = await redeployMutation.mutateAsync({ projectId });
+      const jobId = response.jobID || response.jobId || response.deploymentId;
+      const queueMessage = response.msg || "Job Added to Queue";
+
+      if (!jobId) {
+        throw new Error("Could not read job ID from redeploy response");
+      }
+
+      const selectedProject = projects.find(
+        (project) => project._id === projectId,
+      );
+
+      localStorage.setItem(
+        activeDeploymentJobKey,
+        JSON.stringify({
+          jobId,
+          projectName: selectedProject?.name || "Deployment",
+          startedAt: Date.now(),
+        }),
+      );
+
+      toastSuccess(queueMessage, theme);
+      router.push(
+        `/deploy/${jobId}?projectName=${encodeURIComponent(selectedProject?.name || "Deployment")}`,
+      );
     } catch (error) {
       toastFailure("Failed to trigger redeploy", theme);
       console.error(error);

@@ -35,16 +35,6 @@ type DeployFormState = {
   framework: string;
 };
 
-type StoredDeployment = {
-  id: string;
-  projectName: string;
-  status: "building" | "success" | "failed";
-  url: string;
-  timestamp: string;
-  ownerId: string;
-  repoUrl: string;
-};
-
 const initialFormState: DeployFormState = {
   url: "",
   buildPath: "",
@@ -55,7 +45,7 @@ const initialFormState: DeployFormState = {
 };
 
 const pendingDeployKey = "justship-pending-deploy";
-const deploymentsStorageKey = "justship-user-deployments";
+const activeDeploymentJobKey = "justship-active-deployment-job";
 
 export default function DeployPage() {
   const { user, loading } = useAuth();
@@ -169,49 +159,32 @@ export default function DeployPage() {
 
       const response = await deployMutation.mutateAsync(deployPayload);
 
-      // Store deployment locally
-      const deploymentId =
-        response.deploymentId ||
-        `dep_${Math.random().toString(36).slice(2, 8)}`;
-      const cdnUrl =
-        response.cdnUrl || `https://${form.projectName}.just-ship.app`;
+      const jobId = response.jobID || response.jobId || response.deploymentId;
+      const queueMessage = response.msg || "Job Added to Queue";
 
-      const newDeployment: StoredDeployment = {
-        id: deploymentId,
-        projectName: form.projectName,
-        status: "building",
-        url: cdnUrl,
-        timestamp: "just now",
-        ownerId: user.name,
-        repoUrl: form.url,
-      };
-
-      const existingRaw = localStorage.getItem(deploymentsStorageKey);
-      let existing: StoredDeployment[] = [];
-
-      if (existingRaw) {
-        try {
-          const parsed = JSON.parse(existingRaw);
-          if (Array.isArray(parsed)) existing = parsed;
-        } catch {
-          existing = [];
-        }
+      if (!jobId) {
+        throw new Error("Could not read job ID from deploy response");
       }
 
       localStorage.setItem(
-        deploymentsStorageKey,
-        JSON.stringify([newDeployment, ...existing]),
+        activeDeploymentJobKey,
+        JSON.stringify({
+          jobId,
+          projectName: form.projectName,
+          startedAt: Date.now(),
+        }),
       );
 
-      toastSuccess("Deployment started successfully!", theme);
+      toastSuccess(queueMessage, theme);
 
       // Navigate to logs page
       router.push(
-        `/deploy/${deploymentId}?projectName=${encodeURIComponent(form.projectName)}&cdnUrl=${encodeURIComponent(cdnUrl)}`,
+        `/deploy/${jobId}?projectName=${encodeURIComponent(form.projectName)}`,
       );
     } catch (error) {
       console.error("Deploy error:", error);
       toastFailure("Failed to start deployment. Please try again.", theme);
+    } finally {
       setIsDeploying(false);
     }
   };
@@ -310,7 +283,7 @@ export default function DeployPage() {
 
                 {/* Info Box */}
                 <div className="flex gap-3 rounded-lg border border-orange-400/40 bg-orange-50/20 p-3 dark:bg-orange-950/30">
-                  <AlertCircle className="size-4 flex-shrink-0 text-orange-600 dark:text-orange-400 mt-0.5" />
+                  <AlertCircle className="size-4 shrink-0 text-orange-600 dark:text-orange-400 mt-0.5" />
                   <p className="text-xs text-orange-700 dark:text-orange-300">
                     Environment variables are optional. Only add variables that
                     your app needs to run in production.

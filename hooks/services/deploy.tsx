@@ -40,4 +40,10 @@ export const getDeployments = async(data :{
     return res.data
 }
 
-
+export const getLogs = async(data:{
+    jobId:string
+})=>
+{
+    const res = await api.get(`/logs/${data.jobId}`)
+    return res.data
+}
