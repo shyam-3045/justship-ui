@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/components/providers/auth-provider";
 import { useGetLogs } from "@/hooks/customHooks/deploy";
 import { getSocket } from "@/lib/socket";
+import { getErrorMessage, getSuccessMessage } from "@/utils/api-message";
 import { toastSuccess, toastFailure } from "@/utils/toast";
 
 type DeploymentStatus =
@@ -119,6 +120,10 @@ export default function DeployDetailPage() {
     liveStatus || (fetchedStatus !== "unknown" ? fetchedStatus : "building");
   const deploymentUrl = liveUrl || fetchedUrl;
 
+  const clearActiveDeploymentLock = () => {
+    localStorage.removeItem(activeDeploymentJobKey);
+  };
+
   const socket = useMemo(() => {
     try {
       return getSocket();
@@ -145,15 +150,43 @@ export default function DeployDetailPage() {
   useEffect(() => {
     if (!jobId) return;
 
+    // Do not keep an active lock for terminal statuses.
+    if (status === "success" || status === "failed") {
+      clearActiveDeploymentLock();
+      return;
+    }
+
+    const existingRaw = localStorage.getItem(activeDeploymentJobKey);
+    let existingStartedAt = Date.now();
+
+    if (existingRaw) {
+      try {
+        const existing = JSON.parse(existingRaw) as {
+          startedAt?: number;
+          jobId?: string;
+        };
+
+        if (
+          existing.jobId === jobId &&
+          typeof existing.startedAt === "number" &&
+          existing.startedAt > 0
+        ) {
+          existingStartedAt = existing.startedAt;
+        }
+      } catch {
+        existingStartedAt = Date.now();
+      }
+    }
+
     localStorage.setItem(
       activeDeploymentJobKey,
       JSON.stringify({
         jobId,
         projectName,
-        startedAt: Date.now(),
+        startedAt: existingStartedAt,
       }),
     );
-  }, [jobId, projectName]);
+  }, [jobId, projectName, status]);
 
   useEffect(() => {
     if (!socket || !jobId) return;
@@ -217,13 +250,20 @@ export default function DeployDetailPage() {
         }
       }
 
-      localStorage.removeItem(activeDeploymentJobKey);
-      toastSuccess("Deployment completed successfully!", theme);
+      clearActiveDeploymentLock();
+      toastSuccess(
+        getSuccessMessage(payload, "Deployment completed successfully!"),
+        theme,
+      );
     };
 
-    const handleFailed = () => {
+    const handleFailed = (payload: unknown) => {
       setLiveStatus("failed");
-      toastFailure("Deployment failed. Check logs for details.", theme);
+      clearActiveDeploymentLock();
+      toastFailure(
+        getErrorMessage(payload, "Deployment failed. Check logs for details."),
+        theme,
+      );
     };
 
     socket.on("logs", handleLogs);

@@ -101,7 +101,7 @@ export default function LoginPage() {
             <ArrowRight className="w-3.5 h-3.5 text-muted-foreground ml-auto transition-transform group-hover:translate-x-0.5" />
           </motion.button>
 
-          <motion.button
+          {/*<motion.button
             onClick={loginWithGoogle}
             className="w-full glass-hover rounded-xl py-3 px-4 border border-border/60 transition-all duration-300 flex items-center gap-3 group"
             whileHover={{ scale: 1.01 }}
@@ -112,7 +112,7 @@ export default function LoginPage() {
               Continue with Google
             </span>
             <ArrowRight className="w-3.5 h-3.5 text-muted-foreground ml-auto transition-transform group-hover:translate-x-0.5" />
-          </motion.button>
+          </motion.button> */}
         </motion.div>
 
         {/* Divider */}

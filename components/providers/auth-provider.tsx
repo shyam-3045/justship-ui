@@ -52,10 +52,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       queryClient.setQueryData(["me"], null);
-      await queryClient.invalidateQueries({ queryKey: ["me"] });
-
-      router.push("/");
+      router.replace("/");
       router.refresh();
+      void queryClient.invalidateQueries({ queryKey: ["me"] });
     } catch (err) {
       console.error("Logout failed:", err);
     }

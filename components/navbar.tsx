@@ -17,6 +17,16 @@ type NavbarProps = {
 export function Navbar({ showBorder = true }: NavbarProps) {
   const { user, loginWithGitHub, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const navLinks = user
     ? [
@@ -85,10 +95,11 @@ export function Navbar({ showBorder = true }: NavbarProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={logout}
+                onClick={handleLogout}
+                disabled={isLoggingOut}
                 className="text-xs ml-2"
               >
-                Logout
+                {isLoggingOut ? "Logging out..." : "Logout"}
               </Button>
             </motion.div>
           ) : (

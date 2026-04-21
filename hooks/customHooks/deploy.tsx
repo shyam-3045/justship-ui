@@ -32,6 +32,7 @@ export interface LogsResponse {
 }
 
 export const useDeployProject = () => {
+
   return useMutation<DeployResponse, Error, DeployPayload>({
     mutationFn: (payload: DeployPayload) => deployProject(payload),
     onSuccess: () => console.log("Project Deployment Triggered !"),

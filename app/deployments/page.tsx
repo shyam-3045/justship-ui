@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, GitBranch, RefreshCw, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,7 @@ import {
   useSetActiveVersion,
 } from "@/hooks/customHooks/project";
 import { useRedeployHook, useGetDeployments } from "@/hooks/customHooks/deploy";
+import { getErrorMessage, getSuccessMessage } from "@/utils/api-message";
 import { toastSuccess, toastFailure } from "@/utils/toast";
 
 interface Project {
@@ -47,6 +48,8 @@ interface VersionDeployment {
 }
 
 const activeDeploymentJobKey = "justship-active-deployment-job";
+const activeDeploymentLockMaxAgeMs = 30 * 60 * 1000;
+const pendingDeploymentLockMaxAgeMs = 2 * 60 * 1000;
 
 export default function DeploymentsPage() {
   const { user } = useAuth();
@@ -56,6 +59,11 @@ export default function DeploymentsPage() {
     null,
   );
   const [showVersionModal, setShowVersionModal] = useState(false);
+  const [redeployingProjectId, setRedeployingProjectId] = useState<
+    string | null
+  >(null);
+  const [hasActiveDeploymentLock, setHasActiveDeploymentLock] = useState(false);
+  const redeployClickLockRef = useRef(false);
 
   // Fetch projects
   const { data: projectsData, isLoading: projectsLoading } = useGetProjects();
@@ -70,15 +78,80 @@ export default function DeploymentsPage() {
   // Redeploy mutation
   const redeployMutation = useRedeployHook();
 
+  const hasValidActiveDeployment = () => {
+    const activeRaw = localStorage.getItem(activeDeploymentJobKey);
+    if (!activeRaw) return false;
+
+    try {
+      const active = JSON.parse(activeRaw) as {
+        startedAt?: number;
+        jobId?: string;
+      };
+      const startedAt = active.startedAt;
+      const jobId = active.jobId;
+
+      if (
+        jobId === "pending" &&
+        typeof startedAt === "number" &&
+        Date.now() - startedAt > pendingDeploymentLockMaxAgeMs
+      ) {
+        localStorage.removeItem(activeDeploymentJobKey);
+        return false;
+      }
+
+      if (
+        typeof startedAt === "number" &&
+        Date.now() - startedAt > activeDeploymentLockMaxAgeMs
+      ) {
+        localStorage.removeItem(activeDeploymentJobKey);
+        return false;
+      }
+
+      return true;
+    } catch {
+      localStorage.removeItem(activeDeploymentJobKey);
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
   }, [user]);
 
+  useEffect(() => {
+    setHasActiveDeploymentLock(hasValidActiveDeployment());
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key !== activeDeploymentJobKey) return;
+      setHasActiveDeploymentLock(hasValidActiveDeployment());
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const handleRedeploy = async (projectId: string) => {
+    if (
+      redeployClickLockRef.current ||
+      redeployMutation.isPending ||
+      redeployingProjectId === projectId
+    ) {
+      return;
+    }
+
+    if (hasValidActiveDeployment()) {
+      setHasActiveDeploymentLock(true);
+      toastFailure("A deployment is already in progress. Please wait.", theme);
+      return;
+    }
+
+    redeployClickLockRef.current = true;
+    setRedeployingProjectId(projectId);
+    setHasActiveDeploymentLock(true);
     try {
       const response = await redeployMutation.mutateAsync({ projectId });
       const jobId = response.jobID || response.jobId || response.deploymentId;
-      const queueMessage = response.msg || "Job Added to Queue";
+      const queueMessage = getSuccessMessage(response, "Job Added to Queue");
 
       if (!jobId) {
         throw new Error("Could not read job ID from redeploy response");
@@ -102,8 +175,13 @@ export default function DeploymentsPage() {
         `/deploy/${jobId}?projectName=${encodeURIComponent(selectedProject?.name || "Deployment")}`,
       );
     } catch (error) {
-      toastFailure("Failed to trigger redeploy", theme);
+      localStorage.removeItem(activeDeploymentJobKey);
+      setHasActiveDeploymentLock(false);
+      toastFailure(getErrorMessage(error, "Failed to trigger redeploy"), theme);
       console.error(error);
+    } finally {
+      redeployClickLockRef.current = false;
+      setRedeployingProjectId(null);
     }
   };
 
@@ -205,10 +283,16 @@ export default function DeploymentsPage() {
                         size="sm"
                         variant="secondary"
                         onClick={() => handleRedeploy(project._id)}
-                        disabled={redeployMutation.isPending}
+                        disabled={
+                          hasActiveDeploymentLock ||
+                          redeployMutation.isPending ||
+                          redeployingProjectId === project._id
+                        }
                       >
                         <RefreshCw className="size-4" />
-                        Redeploy
+                        {redeployingProjectId === project._id
+                          ? "Redeploying..."
+                          : "Redeploy"}
                       </Button>
                       <Button
                         size="sm"
@@ -258,19 +342,23 @@ function VersionModal({
   projectId,
 }: VersionModalProps) {
   const setActiveVersionMutation = useSetActiveVersion();
+  const { theme } = useTheme();
 
   const handleSelectVersion = async (version: number) => {
     if (!projectId) return;
 
     try {
-      await setActiveVersionMutation.mutateAsync({
+      const response = await setActiveVersionMutation.mutateAsync({
         projetId: projectId,
         version,
       });
-      toastSuccess("Version changed successfully!", theme);
+      toastSuccess(
+        getSuccessMessage(response, "Version changed successfully!"),
+        theme,
+      );
       onClose();
     } catch (error) {
-      toastFailure("Failed to change version", theme);
+      toastFailure(getErrorMessage(error, "Failed to change version"), theme);
       console.error(error);
     }
   };
