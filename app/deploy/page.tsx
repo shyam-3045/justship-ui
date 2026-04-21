@@ -2,7 +2,7 @@
 
 import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, AlertCircle } from "lucide-react";
+import { Plus, Trash2, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 import DeploySearchParams from "./DeploySearchParams";
 
@@ -57,6 +57,7 @@ export default function DeployPage() {
   const [form, setForm] = useState<DeployFormState>(initialFormState);
   const [isDeploying, setIsDeploying] = useState(false);
   const [hasActiveDeploymentLock, setHasActiveDeploymentLock] = useState(false);
+  const [visibleEnvIndexes, setVisibleEnvIndexes] = useState<number[]>([]);
   const deployClickLockRef = useRef(false);
   const deployMutation = useDeployProject();
 
@@ -157,6 +158,18 @@ export default function DeployPage() {
       ...prev,
       env: prev.env.filter((_, i) => i !== index),
     }));
+
+    setVisibleEnvIndexes((prev) =>
+      prev.filter((item) => item !== index).map((item) => (item > index ? item - 1 : item)),
+    );
+  };
+
+  const toggleEnvVisibility = (index: number) => {
+    setVisibleEnvIndexes((prev) =>
+      prev.includes(index)
+        ? prev.filter((item) => item !== index)
+        : [...prev, index],
+    );
   };
 
   const updateEnvVariable = (
@@ -402,8 +415,25 @@ export default function DeployPage() {
                             updateEnvVariable(index, "value", e.target.value)
                           }
                           className="flex-1"
-                          type="password"
+                          type={
+                            visibleEnvIndexes.includes(index)
+                              ? "text"
+                              : "password"
+                          }
                         />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleEnvVisibility(index)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          {visibleEnvIndexes.includes(index) ? (
+                            <EyeOff className="size-4" />
+                          ) : (
+                            <Eye className="size-4" />
+                          )}
+                        </Button>
                         <Button
                           type="button"
                           variant="ghost"

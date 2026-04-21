@@ -114,14 +114,7 @@ export default function RepositoriesPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <a
-                            href={deployRepoUrl || "#"}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-muted-foreground hover:text-foreground"
-                          >
-                            View
-                          </a>
+                          
                           <Link
                             href={`/deploy?url=${encodeURIComponent(deployRepoUrl)}&projectName=${encodeURIComponent(repo.name)}`}
                           >

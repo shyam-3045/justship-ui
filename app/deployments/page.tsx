@@ -1,9 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, GitBranch, RefreshCw, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  ExternalLink,
+  FolderGit2,
+  GitBranch,
+  Globe,
+  Loader2,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Navbar } from "@/components/navbar";
@@ -50,6 +60,17 @@ interface VersionDeployment {
 const activeDeploymentJobKey = "justship-active-deployment-job";
 const activeDeploymentLockMaxAgeMs = 30 * 60 * 1000;
 const pendingDeploymentLockMaxAgeMs = 2 * 60 * 1000;
+
+const getDisplayHost = (url: string) => {
+  if (!url) return "-";
+
+  try {
+    const parsed = new URL(url);
+    return parsed.host.replace(/^www\./, "");
+  } catch {
+    return url.replace(/^https?:\/\//, "").replace(/^www\./, "");
+  }
+};
 
 export default function DeploymentsPage() {
   const { user } = useAuth();
@@ -244,63 +265,88 @@ export default function DeploymentsPage() {
                 projects.map((project) => (
                   <div
                     key={project._id}
-                    className="flex flex-col justify-between gap-3 rounded-2xl border border-border/60 bg-card/40 p-4 md:flex-row md:items-center"
+                    className="group flex cursor-pointer flex-col justify-between gap-4 rounded-2xl border border-border/60 bg-card/40 p-4 transition-all hover:border-border hover:bg-card/60"
+                    onClick={() => router.push(`/projects/${project._id}`)}
                   >
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="rounded-lg glass-subtle p-2">
-                        <GitBranch className="size-4 text-muted-foreground" />
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="rounded-lg glass-subtle p-2">
+                          <GitBranch className="size-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">
+                            {project.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Version {project.currentVersion}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {project.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Version {project.currentVersion}
-                        </p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        Open details
+                        <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <a
-                        href={project.repoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {project.repoUrl.split("//")[1]}
-                        <ArrowUpRight className="size-3" />
-                      </a>
-                      <a
-                        href={project.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {project.url.split("//")[1]}
-                        <ArrowUpRight className="size-3" />
-                      </a>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleRedeploy(project._id)}
-                        disabled={
-                          hasActiveDeploymentLock ||
-                          redeployMutation.isPending ||
-                          redeployingProjectId === project._id
-                        }
-                      >
-                        <RefreshCw className="size-4" />
-                        {redeployingProjectId === project._id
-                          ? "Redeploying..."
-                          : "Redeploy"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleChangeVersion(project._id)}
-                      >
-                        Change Version
-                      </Button>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <a
+                          href={project.repoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                          className="inline-flex max-w-full items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <FolderGit2 className="size-4 shrink-0" />
+                          <span className="truncate">
+                            {getDisplayHost(project.repoUrl)}
+                          </span>
+                          <ExternalLink className="size-3 shrink-0" />
+                        </a>
+                        <a
+                          href={project.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                          className="inline-flex max-w-full items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <Globe className="size-4 shrink-0" />
+                          <span className="truncate">{getDisplayHost(project.url)}</span>
+                          <ExternalLink className="size-3 shrink-0" />
+                        </a>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2" onClick={(event) => event.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => router.push(`/projects/${project._id}`)}
+                        >
+                          View Project
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleRedeploy(project._id)}
+                          disabled={
+                            hasActiveDeploymentLock ||
+                            redeployMutation.isPending ||
+                            redeployingProjectId === project._id
+                          }
+                        >
+                          <RefreshCw className="size-4" />
+                          {redeployingProjectId === project._id
+                            ? "Redeploying..."
+                            : "Redeploy"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleChangeVersion(project._id)}
+                        >
+                          Change Version
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -341,17 +387,27 @@ function VersionModal({
   isLoading,
   projectId,
 }: VersionModalProps) {
+  const queryClient = useQueryClient();
   const setActiveVersionMutation = useSetActiveVersion();
   const { theme } = useTheme();
+  const [switchingVersion, setSwitchingVersion] = useState<number | null>(null);
 
   const handleSelectVersion = async (version: number) => {
-    if (!projectId) return;
+    if (!projectId || setActiveVersionMutation.isPending) return;
+
+    setSwitchingVersion(version);
 
     try {
       const response = await setActiveVersionMutation.mutateAsync({
         projetId: projectId,
         version,
       });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["projects"] }),
+        queryClient.invalidateQueries({ queryKey: ["deployments", projectId] }),
+      ]);
+
       toastSuccess(
         getSuccessMessage(response, "Version changed successfully!"),
         theme,
@@ -360,6 +416,8 @@ function VersionModal({
     } catch (error) {
       toastFailure(getErrorMessage(error, "Failed to change version"), theme);
       console.error(error);
+    } finally {
+      setSwitchingVersion(null);
     }
   };
 
@@ -375,11 +433,21 @@ function VersionModal({
               Choose a deployment version to set as active
             </CardDescription>
           </div>
-          <button onClick={onClose} className="rounded-md p-1 hover:bg-accent">
+          <button
+            onClick={onClose}
+            disabled={setActiveVersionMutation.isPending}
+            className="rounded-md p-1 hover:bg-accent disabled:opacity-50"
+          >
             <X className="size-4" />
           </button>
         </CardHeader>
         <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+          {setActiveVersionMutation.isPending && (
+            <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm text-muted-foreground animate-pulse">
+              <Loader2 className="size-4 animate-spin" />
+              Switching version...
+            </div>
+          )}
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading versions...</p>
           ) : deployments.length === 0 ? (
@@ -423,7 +491,14 @@ function VersionModal({
                     handleSelectVersion(deployment.version);
                   }}
                 >
-                  Select
+                  {switchingVersion === deployment.version ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Switching...
+                    </>
+                  ) : (
+                    "Select"
+                  )}
                 </Button>
               </div>
             ))

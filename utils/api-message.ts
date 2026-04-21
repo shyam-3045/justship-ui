@@ -51,7 +51,9 @@ export const getServerMessage = (source: unknown): string | null => {
     toCleanString(source) ||
     extractFromObject(source) ||
     extractFromObject((source as { data?: unknown })?.data) ||
-    extractFromObject((source as { response?: { data?: unknown } })?.response?.data) ||
+    extractFromObject(
+      (source as { response?: { data?: unknown } })?.response?.data,
+    ) ||
     toCleanString((source as { message?: unknown })?.message)
   );
 };
@@ -60,6 +62,9 @@ export const getErrorMessage = (error: unknown, fallback: string): string => {
   return getServerMessage(error) || fallback;
 };
 
-export const getSuccessMessage = (response: unknown, fallback: string): string => {
+export const getSuccessMessage = (
+  response: unknown,
+  fallback: string,
+): string => {
   return getServerMessage(response) || fallback;
 };

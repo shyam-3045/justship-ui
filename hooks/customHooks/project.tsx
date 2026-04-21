@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { getProjects, setActiveVersion } from "../services/project"
+import { getEnv, getProjects, setActiveVersion, updateEnv } from "../services/project"
 
 
 interface data {
@@ -22,5 +22,26 @@ export const useGetProjects = ()=>
     return useQuery({
         queryKey : ["projects"],
         queryFn : getProjects
+    })
+}
+
+export const useGetEnv = (projectId : string)=>
+{
+    return useQuery({
+        queryKey :['env',projectId],
+        queryFn :()=> getEnv(projectId),
+        enabled: !!projectId
+    })
+}
+
+
+type EnvType = {
+  projectId: string;
+  env: Record<string, string>;
+}
+export const useUpdateEnv =()=>
+{
+    return useMutation({
+        mutationFn:(payload :EnvType) => updateEnv({projectId :payload.projectId,env :payload.env})
     })
 }
