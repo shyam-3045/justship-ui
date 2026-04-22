@@ -116,13 +116,30 @@ const systems = [
     description:
       "Multiple deploy triggers prevented via localStorage lock. Failed deployment status correctly resets on refresh. Missing logs handled gracefully. JobId tracking fixed. Single active deployment enforced. Proper error messages shown — no generic failures.",
   },
+  {
+    icon: <Sparkles className="size-6" />,
+    title: "AI Log Summaries",
+    description:
+      "When a deployment fails, the logs can be summarized with AI to give a fast root cause, practical fix steps, and a cleaner debugging path.",
+  },
 ];
 
 const technologies = [
-  "Node.js", "Express", "MongoDB", "Redis (Pub/Sub)",
-  "BullMQ", "Docker", "AWS S3", "AWS CloudFront",
-  "AWS EC2", "NGINX", "WebSockets", "Next.js",
-  "TypeScript", "Tailwind CSS", "Framer Motion",
+  "Node.js",
+  "Express",
+  "MongoDB",
+  "Redis (Pub/Sub)",
+  "BullMQ",
+  "Docker",
+  "AWS S3",
+  "AWS CloudFront",
+  "AWS EC2",
+  "NGINX",
+  "WebSockets",
+  "Next.js",
+  "TypeScript",
+  "Tailwind CSS",
+  "Framer Motion",
 ];
 
 export default function AboutPage() {
@@ -136,7 +153,11 @@ export default function AboutPage() {
         <motion.div
           className="absolute top-20 left-10 w-96 h-96 bg-foreground/5 rounded-full blur-3xl"
           animate={{ y: [0, 50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: [0.645, 0.045, 0.355, 1] }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: [0.645, 0.045, 0.355, 1],
+          }}
         />
 
         <motion.div
@@ -175,9 +196,9 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            JustShip is a full-stack deployment orchestration platform — a
-            mini Vercel — built from scratch using Docker, Redis, BullMQ,
-            AWS S3, CloudFront, and WebSockets. Here's exactly how it works.
+            JustShip is a full-stack deployment orchestration platform — a mini
+            Vercel — built from scratch using Docker, Redis, BullMQ, AWS S3,
+            CloudFront, and WebSockets. Here's exactly how it works.
           </motion.p>
 
           <motion.div
@@ -268,7 +289,9 @@ export default function AboutPage() {
                     <div className="flex-grow pb-2">
                       <div className="flex items-start justify-between flex-wrap gap-2 mb-2">
                         <div className="flex items-center gap-3">
-                          <div className="text-muted-foreground">{item.icon}</div>
+                          <div className="text-muted-foreground">
+                            {item.icon}
+                          </div>
                           <h3 className="text-xl font-bold text-foreground">
                             {item.title}
                           </h3>
@@ -392,7 +415,7 @@ export default function AboutPage() {
                   </p>
 
                   <div className="pt-4 flex flex-col sm:flex-row gap-4">
-                    <a href="mailto:your@email.com">
+                    <a href="mailto:s.m.shyam45@gmail.com">
                       <Button size="lg" className="gap-2 font-semibold">
                         <Mail className="size-4" />
                         Email Me
@@ -456,7 +479,6 @@ export default function AboutPage() {
             >
               Dashboard
             </Link>
-          
           </div>
         </div>
       </footer>

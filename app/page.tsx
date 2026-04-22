@@ -8,6 +8,7 @@ import {
   BarChart3,
   GitBranch,
   Code2,
+  Sparkles,
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
@@ -58,6 +59,12 @@ const features = [
     title: "Environment Variables",
     description:
       "Store and manage project-level environment variables securely, injected directly into your builds.",
+  },
+  {
+    icon: <Sparkles className="size-6" />,
+    title: "AI Error Summaries",
+    description:
+      "When a deployment fails, get a quick AI summary of the full logs with clear root cause and fix steps.",
   },
 ];
 
@@ -143,8 +150,7 @@ export default function HomePage() {
           {/* Main Heading */}
           <motion.div className="space-y-4" variants={fadeInUp} custom={1}>
             <h1 className="text-5xl font-bold leading-tight text-foreground md:text-6xl lg:text-7xl">
-              Deploy Your Frontend in
-              Seconds
+              Deploy Your Frontend in Seconds
             </h1>
           </motion.div>
 
@@ -365,10 +371,16 @@ export default function HomePage() {
             >
               Credits
             </Link>
-            <a href="/about" className="hover:text-foreground transition-colors">
+            <a
+              href="/about"
+              className="hover:text-foreground transition-colors"
+            >
               Documentation
             </a>
-            <a href="/about" className="hover:text-foreground transition-colors">
+            <a
+              href="/about"
+              className="hover:text-foreground transition-colors"
+            >
               Architecture
             </a>
           </div>
