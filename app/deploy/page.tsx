@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AppLoadingScreen } from "@/components/ui/app-loading-screen";
+import { CenterLoader } from "@/components/ui/center-loader";
 import { Input } from "@/components/ui/input";
 import { useDeployProject } from "@/hooks/customHooks/deploy";
 import { getErrorMessage, getSuccessMessage } from "@/utils/api-message";
@@ -292,9 +292,9 @@ export default function DeployPage() {
 
       <main className="mx-auto w-full max-w-3xl px-6 py-8 lg:px-10">
         {loading ? (
-          <AppLoadingScreen
-            title="Preparing deploy form"
-            subtitle="Checking your session and loading project defaults..."
+          <CenterLoader
+            label="Loading deploy form..."
+            className="min-h-[60vh]"
           />
         ) : (
           <Card className="glass border-border/70">

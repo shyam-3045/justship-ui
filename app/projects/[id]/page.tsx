@@ -31,6 +31,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CenterLoader } from "@/components/ui/center-loader";
 import { Input } from "@/components/ui/input";
 import { useRedeployHook, useGetDeployments } from "@/hooks/customHooks/deploy";
 import {
@@ -313,10 +314,7 @@ export default function ProjectDetailsPage() {
             </CardHeader>
             <CardContent>
               {projectsLoading || !projectId ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin" />
-                  Loading project...
-                </div>
+                <CenterLoader label="Loading project..." className="min-h-72" />
               ) : !project ? (
                 <p className="text-sm text-muted-foreground">
                   Project not found.

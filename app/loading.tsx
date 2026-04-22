@@ -1,11 +1,9 @@
-import { AppLoadingScreen } from "@/components/ui/app-loading-screen";
+import { CenterLoader } from "@/components/ui/center-loader";
 
 export default function AppLoading() {
   return (
-    <main className="min-h-screen bg-background bg-glow px-6 py-16">
-      <div className="mx-auto max-w-3xl">
-        <AppLoadingScreen />
-      </div>
+    <main className="min-h-screen bg-background bg-glow">
+      <CenterLoader label="Loading..." className="min-h-screen" />
     </main>
   );
 }

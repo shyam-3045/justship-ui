@@ -28,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CenterLoader } from "@/components/ui/center-loader";
 import {
   useGetProjects,
   useSetActiveVersion,
@@ -254,9 +255,10 @@ export default function DeploymentsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {projectsLoading ? (
-                <p className="text-sm text-muted-foreground">
-                  Loading projects...
-                </p>
+                <CenterLoader
+                  label="Loading projects..."
+                  className="min-h-72"
+                />
               ) : projects.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No projects found. Create a project to get started.

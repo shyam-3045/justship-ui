@@ -15,16 +15,32 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CenterLoader } from "@/components/ui/center-loader";
 
 type GitHubRepo = {
   id: number;
   name: string;
   private: boolean;
-  html_url: string;
+  html_url?: string;
+  fullName?: string;
   full_name?: string;
   url?: string;
   clone_url?: string;
   ssh_url?: string;
+};
+
+const getRepoFullName = (repo: GitHubRepo) =>
+  repo.full_name || repo.fullName || "";
+
+const toGitHubRepoUrl = (repo: GitHubRepo) => {
+  if (repo.html_url) return repo.html_url;
+  const fullName = getRepoFullName(repo);
+  if (fullName) return `https://github.com/${fullName}`;
+  if (repo.clone_url) return repo.clone_url.replace(/\.git$/, "");
+  if (repo.url) return repo.url;
+  if (repo.ssh_url) return repo.ssh_url;
+
+  return "";
 };
 
 export default function RepositoriesPage() {
@@ -75,9 +91,10 @@ export default function RepositoriesPage() {
             </CardHeader>
             <CardContent>
               {isLoading && (
-                <p className="text-sm text-muted-foreground">
-                  Loading repositories...
-                </p>
+                <CenterLoader
+                  label="Loading repositories..."
+                  className="min-h-96"
+                />
               )}
               {isError && (
                 <p className="text-sm text-destructive">
@@ -85,46 +102,36 @@ export default function RepositoriesPage() {
                 </p>
               )}
               <div className="grid gap-3 md:grid-cols-2">
-                {repositories.map((repo) =>
-                  (() => {
-                    const deployRepoUrl =
-                      repo.html_url ||
-                      (repo.full_name
-                        ? `https://github.com/${repo.full_name}`
-                        : null) ||
-                      repo.clone_url ||
-                      repo.url ||
-                      repo.ssh_url ||
-                      "";
+                {repositories.map((repo) => {
+                  const deployRepoUrl = toGitHubRepoUrl(repo);
+                  const repoFullName = getRepoFullName(repo);
 
-                    return (
-                      <div
-                        key={repo.id}
-                        className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/30 p-4"
-                      >
-                        <div>
-                          <p className="font-medium">{repo.name}</p>
-                          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                            {repo.private ? (
-                              <Lock className="size-3.5" />
-                            ) : (
-                              <Globe className="size-3.5" />
-                            )}
-                            {repo.private ? "private" : "public"}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          
-                          <Link
-                            href={`/deploy?url=${encodeURIComponent(deployRepoUrl)}&projectName=${encodeURIComponent(repo.name)}`}
-                          >
-                            <Button size="sm">Deploy</Button>
-                          </Link>
+                  return (
+                    <div
+                      key={repo.id}
+                      className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/30 p-4"
+                    >
+                      <div>
+                        <p className="font-medium">{repo.name}</p>
+                        <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                          {repo.private ? (
+                            <Lock className="size-3.5" />
+                          ) : (
+                            <Globe className="size-3.5" />
+                          )}
+                          {repo.private ? "private" : "public"}
                         </div>
                       </div>
-                    );
-                  })(),
-                )}
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/deploy?url=${encodeURIComponent(deployRepoUrl)}&projectName=${encodeURIComponent(repo.name)}${repoFullName ? `&repoFullName=${encodeURIComponent(repoFullName)}` : ""}`}
+                        >
+                          <Button size="sm">Deploy</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               {!isLoading && !isError && repositories.length === 0 && (
                 <p className="mt-4 text-sm text-muted-foreground">
