@@ -4,7 +4,6 @@ type Theme = "light" | "dark";
 
 const getBaseConfig = (theme: Theme = "dark") => ({
   className: "toast-shell",
-  bodyClassName: "toast-body",
   progressClassName: "toast-progress",
   position: "top-right" as const,
   autoClose: 4200,

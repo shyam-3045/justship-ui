@@ -19,7 +19,6 @@ const ToastProvider = () => {
       limit={4}
       stacked
       toastClassName="toast-shell"
-      bodyClassName="toast-body"
       progressClassName="toast-progress"
     />
   );
