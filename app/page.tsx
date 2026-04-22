@@ -25,39 +25,39 @@ import { fadeInUp, containerVariants } from "@/lib/animations";
 const features = [
   {
     icon: <Zap className="size-6" />,
-    title: "Lightning Fast Deploys",
+    title: "Instant Deployments",
     description:
-      "Deploy your frontend in seconds, not minutes. Optimized for speed and performance.",
+      "Push your GitHub repo and watch it build, version, and go live automatically — no manual steps needed.",
   },
   {
     icon: <Globe className="size-6" />,
-    title: "Global CDN",
+    title: "CloudFront CDN",
     description:
-      "Built-in CDN distributes your content worldwide for lightning-fast load times.",
+      "Your static files are served globally via AWS CloudFront for fast load times everywhere.",
   },
   {
     icon: <Shield className="size-6" />,
-    title: "Enterprise Security",
+    title: "Isolated Docker Builds",
     description:
-      "SSL certificates, DDoS protection, and advanced security features out of the box.",
+      "Every build runs inside a resource-limited Docker container, keeping your system safe and stable.",
   },
   {
     icon: <GitBranch className="size-6" />,
-    title: "Git Integration",
+    title: "Version Control & Rollback",
     description:
-      "Auto-deploy on every push to GitHub. Works seamlessly with your workflow.",
+      "Every deploy is versioned. Switch between versions or roll back to a previous build instantly.",
   },
   {
     icon: <BarChart3 className="size-6" />,
-    title: "Advanced Analytics",
+    title: "Real-Time Build Logs",
     description:
-      "Real-time metrics, error tracking, and performance insights for all deployments.",
+      "Watch your deployment logs live via WebSockets. Logs are persisted so you can review them anytime.",
   },
   {
     icon: <Code2 className="size-6" />,
-    title: "Developer Friendly",
+    title: "Environment Variables",
     description:
-      "Simple CLI, comprehensive API, and excellent documentation for developers.",
+      "Store and manage project-level environment variables securely, injected directly into your builds.",
   },
 ];
 
@@ -65,28 +65,28 @@ const features = [
 const steps = [
   {
     number: "01",
-    title: "Connect Repository",
+    title: "Submit Your GitHub Repo",
     description:
-      "Link your GitHub repository with a single click. We'll monitor all your commits.",
+      "Paste your GitHub repository URL into JustShip. We'll clone it inside an isolated Docker container and kick off the build.",
   },
   {
     number: "02",
-    title: "Automatic Deployments",
+    title: "We Build, Version & Deploy",
     description:
-      "Every push triggers an automatic build and deployment to our global network.",
+      "Your project is built automatically, versioned in S3, and served via CloudFront CDN — all tracked in real time.",
   },
   {
     number: "03",
-    title: "Monitor & Scale",
+    title: "Monitor, Switch & Rollback",
     description:
-      "Track performance metrics, manage versions, and scale as your app grows.",
+      "View live logs, manage deployment history, switch versions, or roll back — all from one simple dashboard.",
   },
 ];
 
 const stats = [
-  { target: 100000, label: "Deployments", suffix: "+" },
-  { target: 50, label: "Countries", suffix: "+" },
-  { target: 99.99, label: "Uptime", suffix: "%" },
+  { target: 100, label: "Deployments Supported", suffix: "+" },
+  { target: 99.9, label: "Uptime Target", suffix: "%" },
+  { target: 1, label: "Command to Deploy", suffix: "" },
 ];
 
 export default function HomePage() {
@@ -136,14 +136,15 @@ export default function HomePage() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
             <span className="text-xs font-semibold text-foreground/80">
-              Now with Advanced Analytics
+              Built on AWS S3 + CloudFront + Docker
             </span>
           </motion.div>
 
           {/* Main Heading */}
           <motion.div className="space-y-4" variants={fadeInUp} custom={1}>
             <h1 className="text-5xl font-bold leading-tight text-foreground md:text-6xl lg:text-7xl">
-              Deploy Your Frontend in Seconds
+              Deploy Your Frontend in
+              Seconds
             </h1>
           </motion.div>
 
@@ -153,8 +154,8 @@ export default function HomePage() {
             variants={fadeInUp}
             custom={2}
           >
-            Lightning-fast deployments, global CDN, and enterprise security.
-            JustShip powers modern frontend teams worldwide.
+            JustShip automates building, versioning, and deploying your frontend
+            apps — powered by Docker, Redis queues, S3, and CloudFront CDN.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -165,7 +166,7 @@ export default function HomePage() {
           >
             <Link href="/login">
               <Button size="lg" className="gap-2 px-8 font-semibold">
-                Start Deploying
+                Deploy Your App
                 <ArrowRight className="size-4" />
               </Button>
             </Link>
@@ -174,7 +175,7 @@ export default function HomePage() {
               variant="ghost"
               className="gap-2 border border-border/60 text-foreground hover:bg-muted/60"
             >
-              Watch Demo
+              View Architecture
               <Code2 className="size-4" />
             </Button>
           </motion.div>
@@ -182,7 +183,7 @@ export default function HomePage() {
           {/* Floating Cards */}
           <motion.div className="pt-12" variants={fadeInUp} custom={4}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {["Deploy in <30s", "99.99% Uptime", "Global CDN"].map(
+              {["Deploy in <30s", "Version Switching", "Global CDN"].map(
                 (stat, i) => (
                   <PremiumCard key={i} className="text-center py-4">
                     <p className="text-sm font-semibold text-muted-foreground">
@@ -200,9 +201,9 @@ export default function HomePage() {
       <section className="relative bg-gradient-to-b from-transparent via-muted/30 to-transparent px-6 py-20 md:py-32">
         <div className="max-w-7xl mx-auto">
           <SectionHeader
-            title="Everything You Need"
-            subtitle="Features"
-            description="Powerful tools to deploy, monitor, and scale your frontend applications"
+            title="What JustShip Does"
+            subtitle="Core Features"
+            description="A complete deployment pipeline — from GitHub repo to live URL — built from scratch"
             centered
             gradient
           />
@@ -232,8 +233,8 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <SectionHeader
             title="How It Works"
-            subtitle="Getting Started"
-            description="Three simple steps to deploy your first application"
+            subtitle="The Pipeline"
+            description="Three steps from code to live deployment"
             centered
             gradient
           />
@@ -328,20 +329,20 @@ export default function HomePage() {
                 variants={fadeInUp}
                 custom={0}
               >
-                Ready to Deploy?
+                Ready to Ship?
               </motion.h2>
               <motion.p
                 className="text-lg text-muted-foreground"
                 variants={fadeInUp}
                 custom={1}
               >
-                Join thousands of developers deploying their web applications
-                with JustShip.
+                Paste your GitHub repo and JustShip handles the rest — build,
+                version, deploy, and serve globally.
               </motion.p>
               <motion.div variants={fadeInUp} custom={2}>
                 <Link href="/login">
                   <Button size="lg" className="font-semibold">
-                    Get Started Now
+                    Start Deploying
                     <ArrowRight className="size-4" />
                   </Button>
                 </Link>
@@ -355,7 +356,7 @@ export default function HomePage() {
       <footer className="border-t border-border bg-background/70 py-12 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm text-muted-foreground mb-4">
-            © 2024 JustShip. All rights reserved.
+            © 2024 JustShip. Built by shyam, for real-world deployments.
           </p>
           <div className="flex justify-center gap-6 text-xs text-muted-foreground">
             <Link
@@ -364,11 +365,11 @@ export default function HomePage() {
             >
               Credits
             </Link>
-            <a href="#" className="hover:text-foreground transition-colors">
+            <a href="/about" className="hover:text-foreground transition-colors">
               Documentation
             </a>
-            <a href="#" className="hover:text-foreground transition-colors">
-              Blog
+            <a href="/about" className="hover:text-foreground transition-colors">
+              Architecture
             </a>
           </div>
         </div>

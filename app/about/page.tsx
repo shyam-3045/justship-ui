@@ -1,7 +1,22 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { GitBranch, Mail, Sparkles, Code2, Palette, Zap } from "lucide-react";
+import {
+  GitBranch,
+  Mail,
+  Sparkles,
+  ArrowDown,
+  Server,
+  Database,
+  Globe,
+  Layers,
+  Radio,
+  Container,
+  CloudUpload,
+  Cpu,
+  Lock,
+  RefreshCw,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Navbar } from "@/components/navbar";
@@ -11,52 +26,112 @@ import { SectionHeader } from "@/components/section-header";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { fadeInUp, containerVariants } from "@/lib/animations";
 
-const team = [
+// Main pipeline steps
+const pipeline = [
   {
-    name: "Creative Minds",
-    role: "Product & Design",
+    step: "01",
+    icon: <Globe className="size-6" />,
+    title: "GitHub Repo URL",
     description:
-      "Crafting the vision of a premium deployment platform with meticulous attention to detail.",
-    icon: <Palette className="size-8" />,
+      "You submit a GitHub repository URL through the frontend. The API validates it and creates a deployment record in MongoDB with status 'queued'.",
+    tag: "Frontend → API",
   },
   {
-    name: "Engineering Team",
-    role: "Development",
+    step: "02",
+    icon: <Database className="size-6" />,
+    title: "BullMQ Job Queue",
     description:
-      "Building robust, scalable infrastructure for lightning-fast deployments globally.",
-    icon: <Code2 className="size-8" />,
+      "The API pushes a job into a BullMQ queue backed by Redis. This decouples the API from the build process — the API responds instantly while the job waits for a worker.",
+    tag: "Redis + BullMQ",
   },
   {
-    name: "Performance Team",
-    role: "Optimization",
+    step: "03",
+    icon: <Container className="size-6" />,
+    title: "Docker Build Worker",
     description:
-      "Ensuring every millisecond counts with continuous performance optimization.",
-    icon: <Zap className="size-8" />,
+      "A worker picks up the job and spins up an isolated Docker container. It clones the repo, runs npm install and npm run build, and writes output to /output/projectName. Container is resource-limited to 200MB RAM and 0.3 CPUs to prevent system crashes.",
+    tag: "Docker (Isolated)",
+  },
+  {
+    step: "04",
+    icon: <CloudUpload className="size-6" />,
+    title: "Upload to AWS S3",
+    description:
+      "After a successful build, all output files are uploaded to S3 under a versioned path: project/v{n}/. Each deployment gets its own version — nothing is ever overwritten.",
+    tag: "AWS S3 (Versioned)",
+  },
+  {
+    step: "05",
+    icon: <Globe className="size-6" />,
+    title: "Served via CloudFront CDN",
+    description:
+      "CloudFront sits in front of S3 and serves files globally. HTML files get no-cache headers so users always get the latest version. Hashed static assets are cached for 1 year — fast and cost-efficient with zero CDN invalidations needed.",
+    tag: "AWS CloudFront",
+  },
+  {
+    step: "06",
+    icon: <Globe className="size-6" />,
+    title: "Subdomain Routing",
+    description:
+      "Every project gets its own subdomain: project-name.just-ship.app. A CloudFront Function parses the subdomain, maps it to the correct S3 path, and serves the right files automatically.",
+    tag: "CloudFront Functions",
+  },
+];
+
+// Supporting systems
+const systems = [
+  {
+    icon: <Radio className="size-6" />,
+    title: "Real-Time Build Logs",
+    description:
+      "The Docker worker emits logs to Redis Pub/Sub as it builds. A WebSocket server subscribes and streams them to your browser in real time — room-isolated per deployment so concurrent builds never mix logs. All logs are also persisted in MongoDB so you can review them after a refresh.",
+  },
+  {
+    icon: <Layers className="size-6" />,
+    title: "Versioning & Rollback",
+    description:
+      "Every deployment is versioned. JustShip tracks currentVersion (live) and lastVersion (latest built). You can switch versions or roll back at any time — without rebuilding. A version corruption bug (incorrect incrementing when switching versions) was caught and fixed early.",
+  },
+  {
+    icon: <Cpu className="size-6" />,
+    title: "Low-Resource Infra",
+    description:
+      "The entire backend runs on a t3.micro (1GB RAM). To prevent OOM crashes: Docker containers are throttled, 1GB of swap memory was added at the OS level, and worker concurrency is limited. This taught real-world infra debugging across application, container, and OS layers.",
+  },
+  {
+    icon: <Lock className="size-6" />,
+    title: "Environment Variables",
+    description:
+      "Project-level env variables are stored in MongoDB and injected into the Docker build at runtime. Transfers between frontend and backend are encrypted. Only authenticated users can deploy.",
+  },
+  {
+    icon: <Server className="size-6" />,
+    title: "Backend Infrastructure",
+    description:
+      "The API runs on AWS EC2 behind NGINX as a reverse proxy, with HTTPS via Certbot (Let's Encrypt). The domain api.just-ship.com points to the server. An early lesson: EC2 IPs change on restart — solved by understanding Elastic IPs.",
+  },
+  {
+    icon: <RefreshCw className="size-6" />,
+    title: "Edge Cases Handled",
+    description:
+      "Multiple deploy triggers prevented via localStorage lock. Failed deployment status correctly resets on refresh. Missing logs handled gracefully. JobId tracking fixed. Single active deployment enforced. Proper error messages shown — no generic failures.",
   },
 ];
 
 const technologies = [
-  "Next.js 16",
-  "React 19",
-  "TypeScript",
-  "Tailwind CSS 4",
-  "Framer Motion",
-  "Lucide React",
-  "Node.js",
-  "Docker",
-  "AWS S3",
-  "Cloudflare CDN",
+  "Node.js", "Express", "MongoDB", "Redis (Pub/Sub)",
+  "BullMQ", "Docker", "AWS S3", "AWS CloudFront",
+  "AWS EC2", "NGINX", "WebSockets", "Next.js",
+  "TypeScript", "Tailwind CSS", "Framer Motion",
 ];
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-background bg-glow overflow-hidden">
-      {/* Navbar */}
       <Navbar showBorder={true} />
 
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="relative min-h-[60vh] flex items-center justify-center px-6 py-20 overflow-hidden">
-        {/* Background Elements */}
         <div className="absolute inset-0 bg-grid opacity-5 pointer-events-none" />
         <motion.div
           className="absolute top-20 left-10 w-96 h-96 bg-foreground/5 rounded-full blur-3xl"
@@ -64,7 +139,6 @@ export default function AboutPage() {
           transition={{ duration: 8, repeat: Infinity, ease: [0.645, 0.045, 0.355, 1] }}
         />
 
-        {/* Hero Content */}
         <motion.div
           className="relative z-10 max-w-4xl mx-auto text-center space-y-6"
           initial={{ opacity: 0 }}
@@ -79,7 +153,7 @@ export default function AboutPage() {
           >
             <Sparkles className="size-4 text-muted-foreground" />
             <span className="text-xs font-semibold text-muted-foreground">
-              About JustShip
+              How JustShip Works
             </span>
           </motion.div>
 
@@ -89,11 +163,9 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <span className="gradient-text">
-              Empowering Developers{" "}
-            </span>
+            <span className="gradient-text">From GitHub URL</span>
             <span className="block">
-              <span className="gradient-text">Worldwide</span>
+              <span className="gradient-text">to Live URL</span>
             </span>
           </motion.h1>
 
@@ -103,33 +175,56 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            JustShip is built with the collective vision of delivering an
-            exceptional deployment experience. Every line of code, every design
-            decision, and every feature is crafted with precision and care.
+            JustShip is a full-stack deployment orchestration platform — a
+            mini Vercel — built from scratch using Docker, Redis, BullMQ,
+            AWS S3, CloudFront, and WebSockets. Here's exactly how it works.
           </motion.p>
+
+          <motion.div
+            className="pt-4 flex justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-muted-foreground"
+            >
+              <ArrowDown className="size-6" />
+            </motion.div>
+          </motion.div>
         </motion.div>
       </section>
 
-      {/* Mission Section */}
-      <section className="relative py-20 md:py-32 px-6">
+      {/* Architecture Overview Card */}
+      <section className="relative py-12 px-6">
         <div className="max-w-4xl mx-auto">
           <ScrollReveal>
             <PremiumCard>
-              <div className="space-y-6">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-foreground/10 to-foreground/5 text-muted-foreground">
-                  <Sparkles className="size-6" />
-                </div>
-                <div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-4 gradient-text">
-                    Our Mission
-                  </h2>
-                  <p className="text-lg text-muted-foreground leading-relaxed">
-                    To revolutionize frontend deployment by providing a platform
-                    that combines enterprise-grade reliability, exceptional
-                    performance, and an enjoyable developer experience. We
-                    believe in removing friction from the deployment process,
-                    allowing teams to ship with confidence.
-                  </p>
+              <div className="space-y-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                  High-Level Architecture
+                </p>
+                <div className="font-mono text-sm text-muted-foreground leading-relaxed space-y-1">
+                  {[
+                    ["User (Browser)", "submits GitHub URL"],
+                    ["Backend API", "Node.js on EC2"],
+                    ["Redis Queue", "BullMQ job queue"],
+                    ["Docker Worker", "isolated build container"],
+                    ["Build Output", "/output/projectName"],
+                    ["AWS S3", "versioned static storage"],
+                    ["CloudFront CDN", "global delivery"],
+                    ["Your Browser", "project-name.just-ship.app"],
+                  ].map(([label, desc], i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-foreground font-semibold w-40 shrink-0">
+                        {label}
+                      </span>
+                      <span className="text-muted-foreground/60">→</span>
+                      <span>{desc}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </PremiumCard>
@@ -137,95 +232,55 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
-        <div className="max-w-7xl mx-auto">
-          <SectionHeader
-            title="Meet the Team"
-            subtitle="Our People"
-            description="Dedicated professionals crafting exceptional experiences"
-            centered
-            gradient
-          />
-
-          <motion.div
-            className="grid md:grid-cols-3 gap-8 mt-16"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            {team.map((member, i) => (
-              <motion.div key={i} variants={fadeInUp} custom={i}>
-                <PremiumCard hover gradient className="h-full flex flex-col">
-                  <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-foreground/10 to-foreground/5 text-muted-foreground">
-                    {member.icon}
-                  </div>
-                  <h3 className="text-2xl font-bold text-foreground mb-2">
-                    {member.name}
-                  </h3>
-                  <p className="text-sm font-semibold text-muted-foreground mb-3">
-                    {member.role}
-                  </p>
-                  <p className="text-muted-foreground leading-relaxed flex-grow">
-                    {member.description}
-                  </p>
-                </PremiumCard>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Values Section */}
+      {/* Deployment Pipeline */}
       <section className="relative py-20 md:py-32 px-6">
         <div className="max-w-4xl mx-auto">
           <SectionHeader
-            title="Our Values"
-            subtitle="What Drives Us"
-            description=""
+            title="The Deployment Pipeline"
+            subtitle="Step by Step"
+            description="What happens from the moment you hit Deploy to when your site goes live"
             centered
             gradient
           />
 
           <motion.div
-            className="grid md:grid-cols-2 gap-6 mt-16"
+            className="mt-16 space-y-6"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-            {[
-              {
-                title: "Excellence",
-                description:
-                  "We pursue the highest standards in everything we do, from code quality to user experience.",
-              },
-              {
-                title: "Reliability",
-                description:
-                  "Enterprise-grade infrastructure and 99.99% uptime commitment to keep your apps running.",
-              },
-              {
-                title: "Innovation",
-                description:
-                  "Continuously evolving with cutting-edge technologies and forward-thinking solutions.",
-              },
-              {
-                title: "Community",
-                description:
-                  "We believe in transparent communication and actively listen to our users' feedback.",
-              },
-            ].map((value, i) => (
-              <motion.div key={i} variants={fadeInUp} custom={i}>
-                <PremiumCard className="h-full">
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-bold text-foreground">
-                      {value.title}
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {value.description}
-                    </p>
+            {pipeline.map((item, index) => (
+              <motion.div key={index} variants={fadeInUp} custom={index}>
+                <PremiumCard hover className="relative">
+                  <div className="flex gap-6">
+                    {/* Step number + connector */}
+                    <div className="flex flex-col items-center gap-2 shrink-0">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted font-bold text-foreground text-lg">
+                        {item.step}
+                      </div>
+                      {index < pipeline.length - 1 && (
+                        <div className="w-px h-6 bg-border" />
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-grow pb-2">
+                      <div className="flex items-start justify-between flex-wrap gap-2 mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="text-muted-foreground">{item.icon}</div>
+                          <h3 className="text-xl font-bold text-foreground">
+                            {item.title}
+                          </h3>
+                        </div>
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-muted text-muted-foreground border border-border/60">
+                          {item.tag}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
                   </div>
                 </PremiumCard>
               </motion.div>
@@ -234,13 +289,50 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Tech Stack Section */}
-      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent to-muted/40">
+      {/* Supporting Systems */}
+      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeader
+            title="Supporting Systems"
+            subtitle="Under the Hood"
+            description="The layers that make JustShip reliable, real-time, and production-grade"
+            centered
+            gradient
+          />
+
+          <motion.div
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-16"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {systems.map((item, i) => (
+              <motion.div key={i} variants={fadeInUp} custom={i}>
+                <PremiumCard hover gradient className="h-full flex flex-col">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-foreground/10 to-foreground/5 text-muted-foreground">
+                    {item.icon}
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed text-sm flex-grow">
+                    {item.description}
+                  </p>
+                </PremiumCard>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Tech Stack */}
+      <section className="relative py-20 md:py-32 px-6">
         <div className="max-w-4xl mx-auto">
           <SectionHeader
-            title="Built With Modern Tech"
+            title="The Full Stack"
             subtitle="Technology Stack"
-            description="Leveraging the best tools available for optimal performance"
+            description="Every tool used to build JustShip end to end"
             centered
             gradient
           />
@@ -263,60 +355,82 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Credits Section */}
-      <section className="relative py-20 md:py-32 px-6">
+      {/* About Me */}
+      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
         <div className="max-w-4xl mx-auto">
           <ScrollReveal>
-            <div className="space-y-8">
+            <div className="space-y-6">
               <SectionHeader
-                title="Project Credits"
-                subtitle="Special Thanks"
+                title="About Me"
+                subtitle="The Builder"
                 description=""
                 centered
+                gradient
               />
 
               <PremiumCard>
-                <div className="space-y-6 text-center">
-                  <p className="text-base text-muted-foreground leading-relaxed">
-                    JustShip is a modern deployment platform built with
-                    dedication and passion. This project demonstrates the power
-                    of combining excellent design principles, cutting-edge
-                    technologies, and user-centric development.
+                <div className="space-y-5">
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    Hey, I'm{" "}
+                    <span className="text-foreground font-semibold">Shyam</span>{" "}
+                    — a college student who loves building real things from
+                    scratch. JustShip is my flagship project, born from a simple
+                    question:{" "}
+                    <em>"How does Vercel actually work under the hood?"</em>
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Instead of just reading about it, I built it — queue
+                    systems, Docker containers, CDN strategies, WebSocket logs,
+                    version rollbacks, and all. Every bug I hit (OOM crashes,
+                    version corruption, DNS misconfigurations) became a real
+                    engineering lesson that no tutorial could have taught me.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    I care about building systems that are reliable under
+                    constraints — not just systems that work on a powerful
+                    machine. This whole project runs on a t3.micro with 1GB RAM.
                   </p>
 
-                  <div className="space-y-3">
-                    <p className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
-                      Special thanks to:
-                    </p>
-                    <p className="text-muted-foreground">
-                      Vercel for inspiration in UI/UX excellence • The React and
-                      Next.js communities for incredible tools • Tailwind CSS
-                      for design systems excellence • All the developers who use
-                      and believe in JustShip
-                    </p>
+                  <div className="pt-4 flex flex-col sm:flex-row gap-4">
+                    <a href="mailto:your@email.com">
+                      <Button size="lg" className="gap-2 font-semibold">
+                        <Mail className="size-4" />
+                        Email Me
+                      </Button>
+                    </a>
+                    <a
+                      href="https://github.com/YOUR_USERNAME"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button size="lg" variant="secondary" className="gap-2">
+                        <GitBranch className="size-4" />
+                        GitHub
+                      </Button>
+                    </a>
                   </div>
                 </div>
               </PremiumCard>
 
               <PremiumCard>
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-foreground">
-                    Open Source & Community
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold text-foreground">
+                    Source Code
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    We're passionate about open source and contributing back to
-                    the community. JustShip is built on the shoulders of giants
-                    and we're proud to support the ecosystems that power us.
+                    The full source code for JustShip is available on GitHub.
+                    Feel free to explore the architecture, read the code, or
+                    raise issues.
                   </p>
-                  <div className="pt-4">
+                  <div className="pt-2">
                     <a
-                      href="https://github.com"
+                      href="https://github.com/shyam-3045/justship-ui"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <GitBranch className="size-5" />
-                      <span>View on GitHub</span>
+                      <span>github.com/shyam-3045/justship-api</span>
                     </a>
                   </div>
                 </div>
@@ -326,67 +440,11 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
-        <motion.div
-          className="max-w-4xl mx-auto rounded-3xl overflow-hidden"
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.3 }}
-        >
-          <PremiumCard className="text-center py-16 md:py-20 px-8">
-            <motion.div
-              className="space-y-6"
-              initial="hidden"
-              whileInView="visible"
-              variants={containerVariants}
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              <motion.h2
-                className="text-3xl md:text-4xl font-bold gradient-text"
-                variants={fadeInUp}
-                custom={0}
-              >
-                Get In Touch
-              </motion.h2>
-              <motion.p
-                className="text-lg text-muted-foreground max-w-2xl mx-auto"
-                variants={fadeInUp}
-                custom={1}
-              >
-                Have questions? Want to collaborate? We'd love to hear from you.
-              </motion.p>
-              <motion.div
-                className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
-                variants={fadeInUp}
-                custom={2}
-              >
-                <a href="mailto:contact@justship.dev">
-                  <Button size="lg" className="gap-2 font-semibold">
-                    <Mail className="size-4" />
-                    Email Us
-                  </Button>
-                </a>
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button size="lg" variant="secondary" className="gap-2">
-                    <GitBranch className="size-4" />
-                    GitHub
-                  </Button>
-                </a>
-              </motion.div>
-            </motion.div>
-          </PremiumCard>
-        </motion.div>
-      </section>
-
       {/* Footer */}
       <footer className="border-t border-border bg-background/70 py-12 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm text-muted-foreground mb-6">
-            © 2024 JustShip. Built with care for developers worldwide.
+            © 2024 JustShip Built by shyam , for real-world deployments.
           </p>
           <div className="flex justify-center gap-6 text-sm text-muted-foreground">
             <Link href="/" className="hover:text-foreground transition-colors">
@@ -398,12 +456,7 @@ export default function AboutPage() {
             >
               Dashboard
             </Link>
-            <a href="#" className="hover:text-foreground transition-colors">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-foreground transition-colors">
-              Terms
-            </a>
+          
           </div>
         </div>
       </footer>

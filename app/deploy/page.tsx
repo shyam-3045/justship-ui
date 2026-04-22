@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { AppLoadingScreen } from "@/components/ui/app-loading-screen";
 import { Input } from "@/components/ui/input";
 import { useDeployProject } from "@/hooks/customHooks/deploy";
 import { getErrorMessage, getSuccessMessage } from "@/utils/api-message";
@@ -160,7 +161,9 @@ export default function DeployPage() {
     }));
 
     setVisibleEnvIndexes((prev) =>
-      prev.filter((item) => item !== index).map((item) => (item > index ? item - 1 : item)),
+      prev
+        .filter((item) => item !== index)
+        .map((item) => (item > index ? item - 1 : item)),
     );
   };
 
@@ -288,20 +291,11 @@ export default function DeployPage() {
       <Navbar />
 
       <main className="mx-auto w-full max-w-3xl px-6 py-8 lg:px-10">
-        {!loading && !user ? (
-          <Card className="glass border-border/70">
-            <CardHeader>
-              <CardTitle>Login Required</CardTitle>
-              <CardDescription>
-                Please login first to deploy using repository URL.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => router.push("/login?next=/deploy")}>
-                Go To Login
-              </Button>
-            </CardContent>
-          </Card>
+        {loading ? (
+          <AppLoadingScreen
+            title="Preparing deploy form"
+            subtitle="Checking your session and loading project defaults..."
+          />
         ) : (
           <Card className="glass border-border/70">
             <CardHeader>
@@ -314,6 +308,13 @@ export default function DeployPage() {
 
             <CardContent>
               <form className="space-y-6" onSubmit={onSubmit}>
+                {!user && (
+                  <div className="rounded-xl border border-border/70 bg-background/60 px-4 py-3 text-sm text-muted-foreground">
+                    Fill the details below and continue. When you click the
+                    button, you will be redirected to login first.
+                  </div>
+                )}
+
                 {/* Repository URL */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
@@ -467,16 +468,19 @@ export default function DeployPage() {
                     className="w-full"
                     disabled={
                       loading ||
-                      isDeploying ||
-                      deployMutation.isPending ||
-                      hasActiveDeploymentLock
+                      (Boolean(user) &&
+                        (isDeploying ||
+                          deployMutation.isPending ||
+                          hasActiveDeploymentLock))
                     }
                   >
-                    {isDeploying || deployMutation.isPending
-                      ? "Deploying..."
-                      : hasActiveDeploymentLock
-                        ? "Deployment In Progress"
-                        : "Deploy Now"}
+                    {!user
+                      ? "Login To Deploy"
+                      : isDeploying || deployMutation.isPending
+                        ? "Deploying..."
+                        : hasActiveDeploymentLock
+                          ? "Deployment In Progress"
+                          : "Deploy Now"}
                   </Button>
                 </div>
               </form>

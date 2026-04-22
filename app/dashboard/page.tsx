@@ -6,6 +6,7 @@ import {
   Activity,
   ArrowUpRight,
   FolderGit2,
+  FolderOpenDot,
   GitBranch,
   Trash2,
   Zap,
@@ -26,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { AppLoadingScreen } from "@/components/ui/app-loading-screen";
 import { mockDeployments, type Deployment } from "@/lib/mock-data";
 
 type StoredDeployment = Deployment & {
@@ -58,7 +60,7 @@ const itemVariants: Variants = {
 };
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [myDeployments, setMyDeployments] = useState<StoredDeployment[]>([]);
 
   useEffect(() => {
@@ -105,6 +107,23 @@ export default function DashboardPage() {
       // no-op: keep current in-memory list if storage format is invalid
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background bg-glow">
+        <Navbar />
+        <main className="mx-auto flex w-full max-w-7xl gap-6 px-6 py-8 lg:px-10">
+          <DashboardSidebar activeLabel="Dashboard" />
+          <section className="w-full">
+            <AppLoadingScreen
+              title="Loading dashboard"
+              subtitle="Fetching your deployments and project activity..."
+            />
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -312,10 +331,25 @@ export default function DashboardPage() {
                     </motion.div>
                   ))}
                   {myDeployments.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      No deployments yet. Start from My Repositories and deploy
-                      one.
-                    </p>
+                    <div className="rounded-2xl border border-dashed border-border/70 bg-background/55 p-6 text-center">
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-border/60 bg-card/70">
+                        <FolderOpenDot className="size-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm font-medium text-foreground">
+                        No projects found yet
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Connect a repo and deploy your first project to see it
+                        listed here.
+                      </p>
+                      <div className="mt-4">
+                        <Link href="/repos">
+                          <Button variant="secondary" size="sm">
+                            Open My Repos
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>

@@ -33,12 +33,12 @@ export function Navbar({ showBorder = true }: NavbarProps) {
         { href: "/", label: "Home" },
         { href: "/about", label: "About" },
         { href: "/dashboard", label: "Dashboard" },
-        { href: "/deploy", label: "Deploy Using Repo URL" },
+        { href: "/deploy", label: "Deploy Now" },
       ]
     : [
         { href: "/", label: "Home" },
         { href: "/about", label: "About" },
-        { href: "/deploy", label: "Deploy Using Repo URL" },
+        { href: "/deploy", label: "Deploy Now" },
       ];
 
   return (

@@ -311,16 +311,23 @@ export default function DeploymentsPage() {
                           className="inline-flex max-w-full items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                         >
                           <Globe className="size-4 shrink-0" />
-                          <span className="truncate">{getDisplayHost(project.url)}</span>
+                          <span className="truncate">
+                            {getDisplayHost(project.url)}
+                          </span>
                           <ExternalLink className="size-3 shrink-0" />
                         </a>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2" onClick={(event) => event.stopPropagation()}>
+                      <div
+                        className="flex flex-wrap items-center gap-2"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => router.push(`/projects/${project._id}`)}
+                          onClick={() =>
+                            router.push(`/projects/${project._id}`)
+                          }
                         >
                           View Project
                         </Button>

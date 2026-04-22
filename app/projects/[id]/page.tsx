@@ -161,7 +161,11 @@ export default function ProjectDetailsPage() {
     setInitialEnvRows(rows);
   }, [envData]);
 
-  const updateEnvRow = (index: number, field: "key" | "value", value: string) => {
+  const updateEnvRow = (
+    index: number,
+    field: "key" | "value",
+    value: string,
+  ) => {
     setEnvRows((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
@@ -172,7 +176,9 @@ export default function ProjectDetailsPage() {
   const removeEnvRow = (index: number) => {
     setEnvRows((prev) => prev.filter((_, idx) => idx !== index));
     setVisibleEnvIndexes((prev) =>
-      prev.filter((item) => item !== index).map((item) => (item > index ? item - 1 : item)),
+      prev
+        .filter((item) => item !== index)
+        .map((item) => (item > index ? item - 1 : item)),
     );
   };
 
@@ -301,7 +307,8 @@ export default function ProjectDetailsPage() {
                 </Button>
               </CardTitle>
               <CardDescription>
-                Platform-style overview with deployment health and environment management.
+                Platform-style overview with deployment health and environment
+                management.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -311,12 +318,16 @@ export default function ProjectDetailsPage() {
                   Loading project...
                 </div>
               ) : !project ? (
-                <p className="text-sm text-muted-foreground">Project not found.</p>
+                <p className="text-sm text-muted-foreground">
+                  Project not found.
+                </p>
               ) : (
                 <div className="space-y-6">
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-xl border border-border/60 bg-background/30 p-4">
-                      <p className="text-xs text-muted-foreground">Production URL</p>
+                      <p className="text-xs text-muted-foreground">
+                        Production URL
+                      </p>
                       <a
                         href={project.url}
                         target="_blank"
@@ -330,7 +341,9 @@ export default function ProjectDetailsPage() {
                     </div>
 
                     <div className="rounded-xl border border-border/60 bg-background/30 p-4">
-                      <p className="text-xs text-muted-foreground">Repository</p>
+                      <p className="text-xs text-muted-foreground">
+                        Repository
+                      </p>
                       <a
                         href={project.repoUrl}
                         target="_blank"
@@ -346,13 +359,17 @@ export default function ProjectDetailsPage() {
 
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="rounded-xl border border-border/60 bg-background/30 p-4">
-                      <p className="text-xs text-muted-foreground">Active Version</p>
+                      <p className="text-xs text-muted-foreground">
+                        Active Version
+                      </p>
                       <p className="mt-1 text-lg font-semibold text-foreground">
                         v{project.currentVersion}
                       </p>
                     </div>
                     <div className="rounded-xl border border-border/60 bg-background/30 p-4">
-                      <p className="text-xs text-muted-foreground">Build Subfolder</p>
+                      <p className="text-xs text-muted-foreground">
+                        Build Subfolder
+                      </p>
                       <p className="mt-1 text-sm font-medium text-foreground">
                         {project.subfolder || "."}
                       </p>
@@ -378,10 +395,14 @@ export default function ProjectDetailsPage() {
                     Redeployment required
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Environment variables were updated. Redeploy to apply changes.
+                    Environment variables were updated. Redeploy to apply
+                    changes.
                   </p>
                 </div>
-                <Button onClick={handleRedeploy} disabled={redeployMutation.isPending}>
+                <Button
+                  onClick={handleRedeploy}
+                  disabled={redeployMutation.isPending}
+                >
                   {redeployMutation.isPending ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
@@ -435,7 +456,9 @@ export default function ProjectDetailsPage() {
                         placeholder="Value"
                         className="flex-1"
                         type={
-                          visibleEnvIndexes.includes(index) ? "text" : "password"
+                          visibleEnvIndexes.includes(index)
+                            ? "text"
+                            : "password"
                         }
                       />
                       <Button
@@ -465,7 +488,12 @@ export default function ProjectDetailsPage() {
                 )}
 
                 <div className="flex flex-wrap items-center gap-2 pt-2">
-                  <Button type="button" variant="secondary" size="sm" onClick={addEnvRow}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={addEnvRow}
+                  >
                     <Plus className="size-4" />
                     Add Variable
                   </Button>
@@ -495,7 +523,8 @@ export default function ProjectDetailsPage() {
               <CardHeader>
                 <CardTitle>Recent Deployments</CardTitle>
                 <CardDescription>
-                  Track health and versions similar to a production platform dashboard.
+                  Track health and versions similar to a production platform
+                  dashboard.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -519,7 +548,7 @@ export default function ProjectDetailsPage() {
                           Version {deployment.version}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            {toReadableDate(deployment.completedAt)}
+                          {toReadableDate(deployment.completedAt)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
