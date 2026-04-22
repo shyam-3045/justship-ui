@@ -38,3 +38,9 @@ export const updateEnv = async (data: EnvType) => {
   });
   return res.data;
 };
+
+export const deleteproject = async(projectId:string)=>
+{
+  const res = await api.delete(`/projects/${projectId}`)
+  return res.data
+}

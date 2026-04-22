@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowUpRight,
   ExternalLink,
@@ -9,6 +9,7 @@ import {
   Globe,
   Loader2,
   RefreshCw,
+  Trash2,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -29,7 +30,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CenterLoader } from "@/components/ui/center-loader";
+import { Input } from "@/components/ui/input";
 import {
+  useDeleteProject,
   useGetProjects,
   useSetActiveVersion,
 } from "@/hooks/customHooks/project";
@@ -84,6 +87,9 @@ export default function DeploymentsPage() {
   const [redeployingProjectId, setRedeployingProjectId] = useState<
     string | null
   >(null);
+  const [projectPendingDelete, setProjectPendingDelete] =
+    useState<Project | null>(null);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const [hasActiveDeploymentLock, setHasActiveDeploymentLock] = useState(false);
   const redeployClickLockRef = useRef(false);
 
@@ -99,6 +105,8 @@ export default function DeploymentsPage() {
 
   // Redeploy mutation
   const redeployMutation = useRedeployHook();
+  const deleteProjectMutation = useDeleteProject();
+  const queryClient = useQueryClient();
 
   const hasValidActiveDeployment = () => {
     const activeRaw = localStorage.getItem(activeDeploymentJobKey);
@@ -212,6 +220,52 @@ export default function DeploymentsPage() {
     setShowVersionModal(true);
   };
 
+  const handleOpenDeleteProject = (project: Project) => {
+    setProjectPendingDelete(project);
+    setDeleteConfirmationText("");
+  };
+
+  const handleCloseDeleteProject = () => {
+    if (deleteProjectMutation.isPending) return;
+
+    setProjectPendingDelete(null);
+    setDeleteConfirmationText("");
+  };
+
+  const handleDeleteProject = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (
+      !projectPendingDelete ||
+      deleteProjectMutation.isPending ||
+      deleteConfirmationText.trim().toLowerCase() !== "confirm"
+    ) {
+      return;
+    }
+
+    try {
+      const response = await deleteProjectMutation.mutateAsync({
+        projectId: projectPendingDelete._id,
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+
+      if (selectedProjectId === projectPendingDelete._id) {
+        setSelectedProjectId(null);
+        setShowVersionModal(false);
+      }
+
+      toastSuccess(
+        getSuccessMessage(response, "Project deleted successfully!"),
+        theme,
+      );
+      handleCloseDeleteProject();
+    } catch (error) {
+      toastFailure(getErrorMessage(error, "Failed to delete project"), theme);
+      console.error(error);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background bg-glow">
@@ -267,75 +321,89 @@ export default function DeploymentsPage() {
                 projects.map((project) => (
                   <div
                     key={project._id}
-                    className="group flex cursor-pointer flex-col justify-between gap-4 rounded-2xl border border-border/60 bg-card/40 p-4 transition-all hover:border-border hover:bg-card/60"
+                    className="group cursor-pointer rounded-3xl border border-border/60 bg-linear-to-br from-card/90 via-card/70 to-background/80 p-5 shadow-lg shadow-black/5 transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-xl hover:shadow-black/10"
                     onClick={() => router.push(`/projects/${project._id}`)}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="rounded-lg glass-subtle p-2">
-                          <GitBranch className="size-4 text-muted-foreground" />
+                    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm backdrop-blur">
+                              <GitBranch className="size-5 text-muted-foreground" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-lg font-semibold text-foreground">
+                                {project.name}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Active deployment version
+                              </p>
+                            </div>
+                          </div>
+                          <div className="inline-flex items-center rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+                            v{project.currentVersion}
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-foreground truncate">
-                            {project.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Version {project.currentVersion}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        Open details
-                        <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </div>
-                    </div>
 
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <a
-                          href={project.repoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(event) => event.stopPropagation()}
-                          className="inline-flex max-w-full items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          <FolderGit2 className="size-4 shrink-0" />
-                          <span className="truncate">
-                            {getDisplayHost(project.repoUrl)}
-                          </span>
-                          <ExternalLink className="size-3 shrink-0" />
-                        </a>
-                        <a
-                          href={project.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(event) => event.stopPropagation()}
-                          className="inline-flex max-w-full items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          <Globe className="size-4 shrink-0" />
-                          <span className="truncate">
-                            {getDisplayHost(project.url)}
-                          </span>
-                          <ExternalLink className="size-3 shrink-0" />
-                        </a>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <a
+                            href={project.repoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(event) => event.stopPropagation()}
+                            className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-border hover:bg-background/70 hover:text-foreground"
+                          >
+                            <FolderGit2 className="size-4 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/80">
+                                Repository
+                              </p>
+                              <p className="truncate font-medium text-foreground">
+                                {getDisplayHost(project.repoUrl)}
+                              </p>
+                            </div>
+                            <ExternalLink className="ml-auto size-3 shrink-0 text-muted-foreground" />
+                          </a>
+                          <a
+                            href={project.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(event) => event.stopPropagation()}
+                            className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-border hover:bg-background/70 hover:text-foreground"
+                          >
+                            <Globe className="size-4 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/80">
+                                Live URL
+                              </p>
+                              <p className="truncate font-medium text-foreground">
+                                {getDisplayHost(project.url)}
+                              </p>
+                            </div>
+                            <ExternalLink className="ml-auto size-3 shrink-0 text-muted-foreground" />
+                          </a>
+                        </div>
                       </div>
 
                       <div
-                        className="flex flex-wrap items-center gap-2"
+                        className="grid gap-2 rounded-3xl border border-border/70 bg-background/50 p-3 backdrop-blur"
                         onClick={(event) => event.stopPropagation()}
                       >
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="h-10 justify-between rounded-2xl px-4"
                           onClick={() =>
                             router.push(`/projects/${project._id}`)
                           }
                         >
-                          View Project
+                          <span>View Project</span>
+                          <ArrowUpRight className="size-4" />
                         </Button>
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="h-10 justify-between rounded-2xl px-4"
                           onClick={() => handleRedeploy(project._id)}
                           disabled={
                             hasActiveDeploymentLock ||
@@ -343,17 +411,30 @@ export default function DeploymentsPage() {
                             redeployingProjectId === project._id
                           }
                         >
+                          <span>
+                            {redeployingProjectId === project._id
+                              ? "Redeploying..."
+                              : "Redeploy"}
+                          </span>
                           <RefreshCw className="size-4" />
-                          {redeployingProjectId === project._id
-                            ? "Redeploying..."
-                            : "Redeploy"}
                         </Button>
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="h-10 justify-between rounded-2xl px-4"
                           onClick={() => handleChangeVersion(project._id)}
                         >
-                          Change Version
+                          <span>Change Version</span>
+                          <GitBranch className="size-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-10 justify-between rounded-2xl px-4"
+                          onClick={() => handleOpenDeleteProject(project)}
+                        >
+                          <span>Delete Project</span>
+                          <Trash2 className="size-4" />
                         </Button>
                       </div>
                     </div>
@@ -373,6 +454,18 @@ export default function DeploymentsPage() {
               deployments={versionDeployments}
               isLoading={deploymentsLoading}
               projectId={selectedProjectId}
+            />
+          )}
+
+          {projectPendingDelete && (
+            <DeleteProjectModal
+              isOpen={!!projectPendingDelete}
+              projectName={projectPendingDelete.name}
+              confirmationText={deleteConfirmationText}
+              onConfirmationTextChange={setDeleteConfirmationText}
+              onClose={handleCloseDeleteProject}
+              onSubmit={handleDeleteProject}
+              isDeleting={deleteProjectMutation.isPending}
             />
           )}
         </section>
@@ -512,6 +605,92 @@ function VersionModal({
               </div>
             ))
           )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+interface DeleteProjectModalProps {
+  isOpen: boolean;
+  projectName: string;
+  confirmationText: string;
+  onConfirmationTextChange: (value: string) => void;
+  onClose: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  isDeleting: boolean;
+}
+
+function DeleteProjectModal({
+  isOpen,
+  projectName,
+  confirmationText,
+  onConfirmationTextChange,
+  onClose,
+  onSubmit,
+  isDeleting,
+}: DeleteProjectModalProps) {
+  if (!isOpen) return null;
+
+  const canSubmit = confirmationText.trim().toLowerCase() === "confirm";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <Card className="glass w-full max-w-md border-border/70">
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+          <div>
+            <CardTitle>Delete Project</CardTitle>
+            <CardDescription>
+              This will permanently delete {projectName}.
+            </CardDescription>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="rounded-md p-1 hover:bg-accent disabled:opacity-50"
+          >
+            <X className="size-4" />
+          </button>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4" onSubmit={onSubmit}>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Type{" "}
+                <span className="font-medium text-foreground">confirm</span> to
+                enable deletion.
+              </p>
+              <Input
+                value={confirmationText}
+                onChange={(event) =>
+                  onConfirmationTextChange(event.target.value)
+                }
+                placeholder="Type confirm"
+                autoComplete="off"
+                disabled={isDeleting}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onClose}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              {canSubmit && (
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Deleting..." : "Delete Project"}
+                </Button>
+              )}
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>

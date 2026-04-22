@@ -7,7 +7,7 @@ const getBaseConfig = (theme: Theme = "dark") => ({
   progressClassName: "toast-progress",
   position: "top-right" as const,
   autoClose: 4200,
-  hideProgressBar: false,
+  hideProgressBar: true,
   closeOnClick: true,
   pauseOnHover: true,
   draggable: true,

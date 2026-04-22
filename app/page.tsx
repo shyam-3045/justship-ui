@@ -189,7 +189,7 @@ export default function HomePage() {
           {/* Floating Cards */}
           <motion.div className="pt-12" variants={fadeInUp} custom={4}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {["Deploy in <30s", "Version Switching", "Global CDN"].map(
+              {["Docker Isolated Build", "Version Switching", "Global CDN"].map(
                 (stat, i) => (
                   <PremiumCard key={i} className="text-center py-4">
                     <p className="text-sm font-semibold text-muted-foreground">

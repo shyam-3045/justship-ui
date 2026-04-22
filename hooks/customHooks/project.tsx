@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  deleteproject,
   getEnv,
   getProjects,
   setActiveVersion,
@@ -42,5 +43,12 @@ export const useUpdateEnv = () => {
   return useMutation({
     mutationFn: (payload: EnvType) =>
       updateEnv({ projectId: payload.projectId, env: payload.env }),
+  });
+};
+
+export const useDeleteProject = () => {
+  return useMutation({
+    mutationFn: (payload: { projectId: string }) =>
+      deleteproject(payload.projectId),
   });
 };

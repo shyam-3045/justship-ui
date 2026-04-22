@@ -51,6 +51,15 @@ const activeDeploymentJobKey = "justship-active-deployment-job";
 const activeDeploymentLockMaxAgeMs = 30 * 60 * 1000;
 const pendingDeploymentLockMaxAgeMs = 2 * 60 * 1000;
 
+const normalizeProjectName = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
 export default function DeployPage() {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
@@ -211,6 +220,16 @@ export default function DeployPage() {
       return;
     }
 
+    const sanitizedProjectName = normalizeProjectName(form.projectName);
+
+    if (!sanitizedProjectName) {
+      toastFailure(
+        "Project name can only include letters, numbers, and hyphens.",
+        theme,
+      );
+      return;
+    }
+
     deployClickLockRef.current = true;
     setIsDeploying(true);
     localStorage.setItem(
@@ -241,7 +260,7 @@ export default function DeployPage() {
       } = {
         url: form.url,
         buildPath: form.buildPath,
-        projectName: form.projectName.toLowerCase(),
+        projectName: sanitizedProjectName,
         framework: form.framework,
         ...(Object.keys(envObject).length > 0 && { env: envObject }),
       };
@@ -259,7 +278,7 @@ export default function DeployPage() {
         activeDeploymentJobKey,
         JSON.stringify({
           jobId,
-          projectName: form.projectName,
+          projectName: sanitizedProjectName,
           startedAt: Date.now(),
         }),
       );
@@ -268,7 +287,7 @@ export default function DeployPage() {
 
       // Navigate to logs page
       router.push(
-        `/deploy/${jobId}?projectName=${encodeURIComponent(form.projectName)}`,
+        `/deploy/${jobId}?projectName=${encodeURIComponent(sanitizedProjectName)}`,
       );
     } catch (error) {
       console.error("Deploy error:", error);
@@ -317,6 +336,13 @@ export default function DeployPage() {
 
                 {/* Repository URL */}
                 <div>
+                  <div className="mb-3 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-50/80 px-4 py-3 text-sm text-amber-900 shadow-sm shadow-amber-500/5 dark:border-amber-400/25 dark:bg-amber-950/35 dark:text-amber-100">
+                    <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-300" />
+                    <p>
+                      Private repositories are not accepted. Please use a public
+                      repository, otherwise deployment may fail.
+                    </p>
+                  </div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
                     Repository URL <span className="text-red-500">*</span>
                   </label>
@@ -337,14 +363,19 @@ export default function DeployPage() {
                     value={form.projectName}
                     onChange={(e) => updateField("projectName", e.target.value)}
                     placeholder="my-awesome-app"
+                    autoComplete="off"
                     required
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Use lowercase letters, numbers, and hyphens only. Spaces and
+                    special characters are normalized before deploy.
+                  </p>
                 </div>
 
                 {/* Build Path */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
-                    Build Path <span className="text-red-500">*</span>
+                    . / Root Directory <span className="text-red-500">*</span>
                   </label>
                   <Input
                     value={form.buildPath}
@@ -370,7 +401,6 @@ export default function DeployPage() {
                   >
                     <option value="react">React (Vite / CRA)</option>
                     <option value="vue">Vue</option>
-                    <option value="html">Static HTML</option>
                   </select>
                 </div>
 
@@ -391,7 +421,7 @@ export default function DeployPage() {
                   {/* Info Box */}
                   <div className="flex gap-3 rounded-lg border border-orange-400/40 bg-orange-50/20 p-3 dark:bg-orange-950/30">
                     <AlertCircle className="size-4 shrink-0 text-orange-600 dark:text-orange-400 mt-0.5" />
-                    <p className="text-xs text-orange-700 dark:text-orange-300">
+                    <p className="text-xs text-amber-600">
                       Environment variables are optional. Only add variables
                       that your app needs to run in production.
                     </p>
