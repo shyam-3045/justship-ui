@@ -7,6 +7,7 @@ import {
   ExternalLink,
   FolderGit2,
   Globe,
+  GitBranch,
   Loader2,
   Eye,
   EyeOff,
@@ -51,6 +52,7 @@ type Project = {
   subfolder: string;
   url: string;
   createdAt: string;
+  branch?: string;
 };
 
 type Deployment = {
@@ -59,6 +61,7 @@ type Deployment = {
   status: "success" | "failed" | "building";
   completedAt: string;
   cdnUrl?: string;
+  branch?: string;
 };
 
 type EnvRow = {
@@ -147,6 +150,14 @@ export default function ProjectDetailsPage() {
 
   const deployments = ((deploymentsData as { deployments?: Deployment[] })
     ?.deployments || []) as Deployment[];
+
+  const latestDeployment = useMemo(() => {
+    if (deployments.length === 0) return null;
+
+    return [...deployments].sort((left, right) => right.version - left.version)[0] || null;
+  }, [deployments]);
+
+  const displayBranch = project?.branch || latestDeployment?.branch || "-";
 
   const updateEnvMutation = useUpdateEnv();
   const redeployMutation = useRedeployHook();
@@ -355,7 +366,7 @@ export default function ProjectDetailsPage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-4">
                     <div className="rounded-xl border border-border/60 bg-background/30 p-4">
                       <p className="text-xs text-muted-foreground">
                         Active Version
@@ -370,6 +381,13 @@ export default function ProjectDetailsPage() {
                       </p>
                       <p className="mt-1 text-sm font-medium text-foreground">
                         {project.subfolder || "."}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-border/60 bg-background/30 p-4">
+                      <p className="text-xs text-muted-foreground">Branch</p>
+                      <p className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-foreground">
+                        <GitBranch className="size-3.5" />
+                        {displayBranch}
                       </p>
                     </div>
                     <div className="rounded-xl border border-border/60 bg-background/30 p-4">
@@ -544,6 +562,9 @@ export default function ProjectDetailsPage() {
                       <div>
                         <p className="text-sm font-medium text-foreground">
                           Version {deployment.version}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Branch: {deployment.branch || displayBranch}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {toReadableDate(deployment.completedAt)}

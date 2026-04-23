@@ -1,6 +1,13 @@
 "use client";
 
-import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
+import {
+  FormEvent,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, AlertCircle, Eye, EyeOff } from "lucide-react";
 
@@ -20,6 +27,7 @@ import {
 import { CenterLoader } from "@/components/ui/center-loader";
 import { Input } from "@/components/ui/input";
 import { useDeployProject } from "@/hooks/customHooks/deploy";
+import { useBranches } from "@/hooks/customHooks/repos";
 import { getErrorMessage, getSuccessMessage } from "@/utils/api-message";
 import { toastSuccess, toastFailure } from "@/utils/toast";
 
@@ -35,6 +43,7 @@ type DeployFormState = {
   projectName: string;
   userId: string;
   framework: string;
+  branch: string;
 };
 
 const initialFormState: DeployFormState = {
@@ -43,6 +52,7 @@ const initialFormState: DeployFormState = {
   env: [],
   projectName: "",
   userId: "",
+  branch: "",
   framework: "react",
 };
 
@@ -60,6 +70,69 @@ const normalizeProjectName = (value: string) =>
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+type BranchOption = {
+  name: string;
+};
+
+const extractGitHubRepoFullName = (value: string) => {
+  const raw = value.trim();
+  if (!raw) return "";
+
+  if (/^[\w.-]+\/[\w.-]+$/.test(raw)) {
+    return raw;
+  }
+
+  try {
+    const normalized = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    const parsed = new URL(normalized);
+
+    if (!/^(www\.)?github\.com$/i.test(parsed.host)) return "";
+
+    const [owner, repo] = parsed.pathname
+      .replace(/^\/+/, "")
+      .replace(/\.git$/, "")
+      .split("/");
+
+    if (!owner || !repo) return "";
+
+    return `${owner}/${repo}`;
+  } catch {
+    return "";
+  }
+};
+
+const normalizeBranchList = (input: unknown): BranchOption[] => {
+  const source = Array.isArray(input)
+    ? input
+    : Array.isArray((input as { branches?: unknown[] } | undefined)?.branches)
+      ? (input as { branches?: unknown[] }).branches
+      : Array.isArray((input as { data?: unknown[] } | undefined)?.data)
+        ? (input as { data?: unknown[] }).data
+        : [];
+
+  const normalizedSource = source ?? [];
+
+  const mapped = normalizedSource
+    .map((item) => {
+      if (typeof item === "string") {
+        return { name: item.trim() };
+      }
+
+      if (item && typeof item === "object" && "name" in item) {
+        const name = String((item as { name?: unknown }).name ?? "").trim();
+        if (name) return { name };
+      }
+
+      return null;
+    })
+    .filter((item): item is BranchOption => Boolean(item && item.name));
+
+  return mapped.filter(
+    (item, index, arr) =>
+      arr.findIndex((candidate) => candidate.name === item.name) === index,
+  );
+};
+
 export default function DeployPage() {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
@@ -70,6 +143,21 @@ export default function DeployPage() {
   const [visibleEnvIndexes, setVisibleEnvIndexes] = useState<number[]>([]);
   const deployClickLockRef = useRef(false);
   const deployMutation = useDeployProject();
+  const repoFullName = useMemo(
+    () => extractGitHubRepoFullName(form.url),
+    [form.url],
+  );
+  const {
+    data: branchData,
+    isLoading: branchesLoading,
+    isFetching: branchesFetching,
+    isError: branchesError,
+  } = useBranches(repoFullName);
+
+  const branchOptions = useMemo(
+    () => normalizeBranchList(branchData),
+    [branchData],
+  );
 
   const hasValidActiveDeployment = () => {
     const activeRaw = localStorage.getItem(activeDeploymentJobKey);
@@ -149,6 +237,29 @@ export default function DeployPage() {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+  useEffect(() => {
+    setForm((prev) => {
+      if (!repoFullName) {
+        if (!prev.branch) return prev;
+        return { ...prev, branch: "" };
+      }
+
+      if (branchOptions.length === 0) {
+        return prev;
+      }
+
+      const hasSelectedBranch = branchOptions.some(
+        (branch) => branch.name === prev.branch,
+      );
+
+      if (hasSelectedBranch) {
+        return prev;
+      }
+
+      return { ...prev, branch: branchOptions[0].name };
+    });
+  }, [repoFullName, branchOptions]);
+
   const updateField = (
     key: keyof Omit<DeployFormState, "env">,
     value: string,
@@ -215,7 +326,13 @@ export default function DeployPage() {
       return;
     }
 
-    if (!form.url || !form.buildPath || !form.projectName || !form.framework) {
+    if (
+      !form.url ||
+      !form.buildPath ||
+      !form.projectName ||
+      !form.framework ||
+      !form.branch
+    ) {
       toastFailure("Please fill in all required fields", theme);
       return;
     }
@@ -256,12 +373,14 @@ export default function DeployPage() {
         buildPath: string;
         projectName: string;
         framework: string;
+        branch: string;
         env?: Record<string, string | number | boolean>;
       } = {
         url: form.url,
         buildPath: form.buildPath,
         projectName: sanitizedProjectName,
         framework: form.framework,
+        branch: form.branch,
         ...(Object.keys(envObject).length > 0 && { env: envObject }),
       };
 
@@ -352,6 +471,45 @@ export default function DeployPage() {
                     placeholder="https://github.com/username/repo"
                     required
                   />
+                </div>
+
+                {/* Branch */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">
+                    Select  Branch <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={form.branch}
+                    onChange={(e) => updateField("branch", e.target.value)}
+                    className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground"
+                    required
+                    disabled={
+                      !repoFullName ||
+                      branchesLoading ||
+                      branchesFetching ||
+                      branchOptions.length === 0
+                    }
+                  >
+                    <option value="">
+                      {!repoFullName
+                        ? "Enter a valid GitHub repository URL first"
+                        : branchesLoading || branchesFetching
+                          ? "Loading branches..."
+                          : branchOptions.length === 0
+                            ? "No branches found"
+                            : "Select a branch"}
+                    </option>
+                    {branchOptions.map((branch) => (
+                      <option key={branch.name} value={branch.name}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                  {branchesError && (
+                    <p className="mt-1 text-xs text-destructive">
+                      Could not load branches for this repository.
+                    </p>
+                  )}
                 </div>
 
                 {/* Project Name */}

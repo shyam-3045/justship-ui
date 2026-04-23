@@ -12,6 +12,7 @@ interface DeployPayload {
   env?: Record<string, string | number | boolean>;
   projectName: string;
   framework: string;
+  branch:string
 }
 
 export interface DeployResponse {
