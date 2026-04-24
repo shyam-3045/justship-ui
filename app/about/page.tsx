@@ -13,11 +13,12 @@ import {
   Radio,
   Container,
   CloudUpload,
-  Cpu,
   Lock,
   RefreshCw,
+  Webhook,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,12 @@ const pipeline = [
 // Supporting systems
 const systems = [
   {
+    icon: <Webhook className="size-6" />,
+    title: "Webhook Event Routing",
+    description:
+      "Each project can enable or disable auto deploy. GitHub webhook events trigger deployment jobs and push real-time in-app notifications to the right user session.",
+  },
+  {
     icon: <Radio className="size-6" />,
     title: "Real-Time Build Logs",
     description:
@@ -88,15 +95,15 @@ const systems = [
   },
   {
     icon: <Layers className="size-6" />,
-    title: "Versioning & Rollback",
+    title: "Version Switching",
     description:
-      "Every deployment is versioned. JustShip tracks currentVersion (live) and lastVersion (latest built). You can switch versions or roll back at any time — without rebuilding. A version corruption bug (incorrect incrementing when switching versions) was caught and fixed early.",
+      "Every deployment is versioned and can be switched from the dashboard. Current live version is tracked separately from newly built versions.",
   },
   {
-    icon: <Cpu className="size-6" />,
-    title: "Low-Resource Infra",
+    icon: <Globe className="size-6" />,
+    title: "Global CDN Delivery",
     description:
-      "The entire backend runs on a t3.micro (1GB RAM). To prevent OOM crashes: Docker containers are throttled, 1GB of swap memory was added at the OS level, and worker concurrency is limited. This taught real-world infra debugging across application, container, and OS layers.",
+      "Deployments are published to S3 and served through CloudFront. This provides edge caching, lower latency, and predictable static-hosting behavior worldwide.",
   },
   {
     icon: <Lock className="size-6" />,
@@ -105,22 +112,10 @@ const systems = [
       "Project-level env variables are stored in MongoDB and injected into the Docker build at runtime. Transfers between frontend and backend are encrypted. Only authenticated users can deploy.",
   },
   {
-    icon: <Server className="size-6" />,
-    title: "Backend Infrastructure",
-    description:
-      "The API runs on AWS EC2 behind NGINX as a reverse proxy, with HTTPS via Certbot (Let's Encrypt). The domain api.just-ship.com points to the server. An early lesson: EC2 IPs change on restart — solved by understanding Elastic IPs.",
-  },
-  {
     icon: <RefreshCw className="size-6" />,
-    title: "Edge Cases Handled",
+    title: "Deployment Reliability",
     description:
       "Multiple deploy triggers prevented via localStorage lock. Failed deployment status correctly resets on refresh. Missing logs handled gracefully. JobId tracking fixed. Single active deployment enforced. Proper error messages shown — no generic failures.",
-  },
-  {
-    icon: <Sparkles className="size-6" />,
-    title: "AI Log Summaries",
-    description:
-      "When a deployment fails, the logs can be summarized with AI to give a fast root cause, practical fix steps, and a cleaner debugging path.",
   },
 ];
 
@@ -172,6 +167,13 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
+            <Image
+              src="/favicon.ico"
+              alt="JustShip logo"
+              width={16}
+              height={16}
+              className="rounded-sm"
+            />
             <Sparkles className="size-4 text-muted-foreground" />
             <span className="text-xs font-semibold text-muted-foreground">
               How JustShip Works
@@ -286,7 +288,7 @@ export default function AboutPage() {
                     </div>
 
                     {/* Content */}
-                    <div className="flex-grow pb-2">
+                    <div className="grow pb-2">
                       <div className="flex items-start justify-between flex-wrap gap-2 mb-2">
                         <div className="flex items-center gap-3">
                           <div className="text-muted-foreground">
@@ -313,7 +315,7 @@ export default function AboutPage() {
       </section>
 
       {/* Supporting Systems */}
-      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
+      <section className="relative py-20 md:py-32 px-6 bg-linear-to-b from-transparent via-muted/30 to-transparent">
         <div className="max-w-7xl mx-auto">
           <SectionHeader
             title="Supporting Systems"
@@ -333,13 +335,13 @@ export default function AboutPage() {
             {systems.map((item, i) => (
               <motion.div key={i} variants={fadeInUp} custom={i}>
                 <PremiumCard hover gradient className="h-full flex flex-col">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-foreground/10 to-foreground/5 text-muted-foreground">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-foreground/10 to-foreground/5 text-muted-foreground">
                     {item.icon}
                   </div>
                   <h3 className="text-lg font-bold text-foreground mb-2">
                     {item.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed text-sm flex-grow">
+                  <p className="text-muted-foreground leading-relaxed text-sm grow">
                     {item.description}
                   </p>
                 </PremiumCard>
@@ -379,7 +381,7 @@ export default function AboutPage() {
       </section>
 
       {/* About Me */}
-      <section className="relative py-20 md:py-32 px-6 bg-gradient-to-b from-transparent via-muted/30 to-transparent">
+      <section className="relative py-20 md:py-32 px-6 bg-linear-to-b from-transparent via-muted/30 to-transparent">
         <div className="max-w-4xl mx-auto">
           <ScrollReveal>
             <div className="space-y-6">
@@ -394,35 +396,34 @@ export default function AboutPage() {
               <PremiumCard>
                 <div className="space-y-5">
                   <p className="text-lg text-muted-foreground leading-relaxed">
-                    Hey, I'm{" "}
-                    <span className="text-foreground font-semibold">Shyam</span>{" "}
-                    — a college student who loves building real things from
-                    scratch. JustShip is my flagship project, born from a simple
-                    question:{" "}
-                    <em>"How does Vercel actually work under the hood?"</em>
+                    Hi, I’m{" "}
+                    <span className="text-foreground font-medium">Shyam</span>.
+                    I’m a student who enjoys building backend systems and
+                    understanding how things work under the hood.
                   </p>
+
                   <p className="text-muted-foreground leading-relaxed">
-                    Instead of just reading about it, I built it — queue
-                    systems, Docker containers, CDN strategies, WebSocket logs,
-                    version rollbacks, and all. Every bug I hit (OOM crashes,
-                    version corruption, DNS misconfigurations) became a real
-                    engineering lesson that no tutorial could have taught me.
+                    JustShip started as a small attempt to explore how modern
+                    deployment platforms work. While building it, I worked
+                    through queue systems, containerized builds, logging
+                    pipelines, and version handling.
                   </p>
+
                   <p className="text-muted-foreground leading-relaxed">
-                    I care about building systems that are reliable under
-                    constraints — not just systems that work on a powerful
-                    machine. This whole project runs on a t3.micro with 1GB RAM.
+                    Most of what I’ve learned came from debugging real issues
+                    and iterating on constraints — especially running everything
+                    on a small instance.
                   </p>
 
                   <div className="pt-4 flex flex-col sm:flex-row gap-4">
                     <a href="mailto:s.m.shyam45@gmail.com">
-                      <Button size="lg" className="gap-2 font-semibold">
+                      <Button size="lg" className="gap-2 font-medium">
                         <Mail className="size-4" />
-                        Email Me
+                        Email
                       </Button>
                     </a>
                     <a
-                      href="https://github.com/YOUR_USERNAME"
+                      href="https://github.com/shyam-3045"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -453,9 +454,18 @@ export default function AboutPage() {
                       className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <GitBranch className="size-5" />
-                      <span>github.com/shyam-3045/justship-api</span>
+                      <span>github.com/shyam-3045/justship-ui</span>
                     </a>
                   </div>
+                  <a
+                    href="https://github.com/shyam-3045/justship-api"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <GitBranch className="size-5" />
+                    <span>github.com/shyam-3045/justship-api</span>
+                  </a>
                 </div>
               </PremiumCard>
             </div>

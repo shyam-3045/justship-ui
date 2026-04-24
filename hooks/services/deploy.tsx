@@ -2,6 +2,7 @@ import api from "@/utils/axios";
 
 interface data {
   url: string;
+  repoFullName: string;
   buildPath: string;
   env?: Record<string, string | number | boolean>;
   projectName: string;
@@ -12,6 +13,7 @@ interface data {
 export const deployProject = async (data: data) => {
   const res = await api.post("/deploy", {
     url: data.url,
+    repoFullName: data.repoFullName,
     buildPath: data.buildPath,
     env: data.env,
     projectName: data.projectName,

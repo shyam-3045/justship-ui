@@ -19,6 +19,7 @@ export const getSocket = () => {
       transports: ["websocket", "polling"],
       autoConnect: true,
       reconnection: true,
+      withCredentials: true,
     });
   }
 

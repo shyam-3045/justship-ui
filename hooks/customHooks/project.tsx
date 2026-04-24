@@ -4,6 +4,7 @@ import {
   getEnv,
   getProjects,
   setActiveVersion,
+  setAutoDeploy,
   updateEnv,
 } from "../services/project";
 
@@ -52,3 +53,11 @@ export const useDeleteProject = () => {
       deleteproject(payload.projectId),
   });
 };
+
+
+export const useAutoDeploy = ()=>
+{
+  return useMutation({
+    mutationFn :(payload :{ projectId : string , autoDeploy:boolean}) => setAutoDeploy(payload.projectId,payload.autoDeploy)
+  })
+}

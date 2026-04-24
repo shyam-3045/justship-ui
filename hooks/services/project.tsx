@@ -35,6 +35,7 @@ export const getEnv = async (projectId: string) => {
 export const updateEnv = async (data: EnvType) => {
   const res = await api.post(`/project/${data.projectId}/env`, {
     env: data.env,
+
   });
   return res.data;
 };
@@ -42,5 +43,14 @@ export const updateEnv = async (data: EnvType) => {
 export const deleteproject = async(projectId:string)=>
 {
   const res = await api.delete(`/projects/${projectId}`)
+  return res.data
+}
+
+export const setAutoDeploy =async(projectId :string , autoDeploy:boolean)=>
+{
+  const res = await api.patch(`/projects/${projectId}/auto-deploy`,{
+    autoDeploy : autoDeploy
+  })
+
   return res.data
 }

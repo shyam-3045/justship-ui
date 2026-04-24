@@ -370,6 +370,7 @@ export default function DeployPage() {
 
       const deployPayload: {
         url: string;
+        repoFullName: string;
         buildPath: string;
         projectName: string;
         framework: string;
@@ -377,6 +378,7 @@ export default function DeployPage() {
         env?: Record<string, string | number | boolean>;
       } = {
         url: form.url,
+        repoFullName,
         buildPath: form.buildPath,
         projectName: sanitizedProjectName,
         framework: form.framework,
@@ -476,7 +478,7 @@ export default function DeployPage() {
                 {/* Branch */}
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">
-                    Select  Branch <span className="text-red-500">*</span>
+                    Select Branch <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={form.branch}

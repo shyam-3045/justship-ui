@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   ArrowUpRight,
   ExternalLink,
@@ -33,10 +33,12 @@ import { CenterLoader } from "@/components/ui/center-loader";
 import { Input } from "@/components/ui/input";
 import {
   useDeleteProject,
+  useAutoDeploy,
   useGetProjects,
   useSetActiveVersion,
 } from "@/hooks/customHooks/project";
 import { useRedeployHook, useGetDeployments } from "@/hooks/customHooks/deploy";
+import { Switch } from "@/components/ui/switch";
 import { getErrorMessage, getSuccessMessage } from "@/utils/api-message";
 import { toastSuccess, toastFailure } from "@/utils/toast";
 
@@ -44,6 +46,7 @@ interface Project {
   _id: string;
   name: string;
   userId: string;
+  autoDeploy?: boolean;
   currentVersion: number;
   repoUrl: string;
   subfolder: string;
@@ -57,6 +60,10 @@ interface VersionDeployment {
   version: number;
   status: "success" | "failed" | "building";
   cdnUrl: string;
+  commitHash?: string;
+  commit?: string;
+  gitCommitHash?: string;
+  sha?: string;
   completedAt: string;
   createdAt: string;
 }
@@ -76,6 +83,23 @@ const getDisplayHost = (url: string) => {
   }
 };
 
+const getDeploymentCommitHash = (deployment: VersionDeployment | null) => {
+  if (!deployment) return "";
+
+  return (
+    deployment.commitHash ||
+    deployment.gitCommitHash ||
+    deployment.commit ||
+    deployment.sha ||
+    ""
+  );
+};
+
+const shortHash = (value: string) => {
+  if (!value) return "-";
+  return value.slice(0, 8);
+};
+
 export default function DeploymentsPage() {
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -91,6 +115,8 @@ export default function DeploymentsPage() {
     useState<Project | null>(null);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const [hasActiveDeploymentLock, setHasActiveDeploymentLock] = useState(false);
+  const [autoDeployUpdatingProjectId, setAutoDeployUpdatingProjectId] =
+    useState<string | null>(null);
   const redeployClickLockRef = useRef(false);
 
   // Fetch projects
@@ -105,6 +131,7 @@ export default function DeploymentsPage() {
 
   // Redeploy mutation
   const redeployMutation = useRedeployHook();
+  const autoDeployMutation = useAutoDeploy();
   const deleteProjectMutation = useDeleteProject();
   const queryClient = useQueryClient();
 
@@ -215,6 +242,37 @@ export default function DeploymentsPage() {
     }
   };
 
+  const handleToggleAutoDeploy = async (project: Project, checked: boolean) => {
+    if (autoDeployMutation.isPending) return;
+
+    setAutoDeployUpdatingProjectId(project._id);
+    try {
+      const response = await autoDeployMutation.mutateAsync({
+        projectId: project._id,
+        autoDeploy: checked,
+      });
+
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toastSuccess(
+        getSuccessMessage(
+          response,
+          checked
+            ? "Auto deploy enabled for this project"
+            : "Auto deploy disabled for this project",
+        ),
+        theme,
+      );
+    } catch (error) {
+      toastFailure(
+        getErrorMessage(error, "Failed to update auto deploy"),
+        theme,
+      );
+      console.error(error);
+    } finally {
+      setAutoDeployUpdatingProjectId(null);
+    }
+  };
+
   const handleChangeVersion = (projectId: string) => {
     setSelectedProjectId(projectId);
     setShowVersionModal(true);
@@ -319,134 +377,33 @@ export default function DeploymentsPage() {
                 </p>
               ) : (
                 projects.map((project) => (
-                  <div
+                  <ProjectCard
                     key={project._id}
-                    className="group cursor-pointer rounded-3xl border border-border/60 bg-linear-to-br from-card/90 via-card/70 to-background/80 p-5 shadow-lg shadow-black/5 transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-xl hover:shadow-black/10"
-                    onClick={() => router.push(`/projects/${project._id}`)}
-                  >
-                    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm backdrop-blur">
-                              <GitBranch className="size-5 text-muted-foreground" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-lg font-semibold text-foreground">
-                                {project.name}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Active deployment version
-                              </p>
-                            </div>
-                          </div>
-                          <div className="inline-flex items-center rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
-                            v{project.currentVersion}
-                          </div>
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <a
-                            href={project.repoUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(event) => event.stopPropagation()}
-                            className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-border hover:bg-background/70 hover:text-foreground"
-                          >
-                            <FolderGit2 className="size-4 shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/80">
-                                Repository
-                              </p>
-                              <p className="truncate font-medium text-foreground">
-                                {getDisplayHost(project.repoUrl)}
-                              </p>
-                            </div>
-                            <ExternalLink className="ml-auto size-3 shrink-0 text-muted-foreground" />
-                          </a>
-                          <a
-                            href={project.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(event) => event.stopPropagation()}
-                            className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-border hover:bg-background/70 hover:text-foreground"
-                          >
-                            <Globe className="size-4 shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/80">
-                                Live URL
-                              </p>
-                              <p className="truncate font-medium text-foreground">
-                                {getDisplayHost(project.url)}
-                              </p>
-                            </div>
-                            <ExternalLink className="ml-auto size-3 shrink-0 text-muted-foreground" />
-                          </a>
-                        </div>
-                      </div>
-
-                      <div
-                        className="grid gap-2 rounded-3xl border border-border/70 bg-background/50 p-3 backdrop-blur"
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-10 justify-between rounded-2xl px-4"
-                          onClick={() =>
-                            router.push(`/projects/${project._id}`)
-                          }
-                        >
-                          <span>View Project</span>
-                          <ArrowUpRight className="size-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-10 justify-between rounded-2xl px-4"
-                          onClick={() => handleRedeploy(project._id)}
-                          disabled={
-                            hasActiveDeploymentLock ||
-                            redeployMutation.isPending ||
-                            redeployingProjectId === project._id
-                          }
-                        >
-                          <span>
-                            {redeployingProjectId === project._id
-                              ? "Redeploying..."
-                              : "Redeploy"}
-                          </span>
-                          <RefreshCw className="size-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-10 justify-between rounded-2xl px-4"
-                          onClick={() => handleChangeVersion(project._id)}
-                        >
-                          <span>Change Version</span>
-                          <GitBranch className="size-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="h-10 justify-between rounded-2xl px-4"
-                          onClick={() => handleOpenDeleteProject(project)}
-                        >
-                          <span>Delete Project</span>
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                    project={project}
+                    hasActiveDeploymentLock={hasActiveDeploymentLock}
+                    isRedeployPending={
+                      redeployMutation.isPending ||
+                      redeployingProjectId === project._id
+                    }
+                    isAutoDeployUpdating={
+                      autoDeployMutation.isPending &&
+                      autoDeployUpdatingProjectId === project._id
+                    }
+                    onOpenProject={() =>
+                      router.push(`/projects/${project._id}`)
+                    }
+                    onRedeploy={() => handleRedeploy(project._id)}
+                    onChangeVersion={() => handleChangeVersion(project._id)}
+                    onDelete={() => handleOpenDeleteProject(project)}
+                    onToggleAutoDeploy={(checked) =>
+                      handleToggleAutoDeploy(project, checked)
+                    }
+                  />
                 ))
               )}
             </CardContent>
           </Card>
 
-          {/* Legacy Deployments Section */}
-
-          {/* Version Selection Modal */}
           {showVersionModal && (
             <VersionModal
               isOpen={showVersionModal}
@@ -470,6 +427,176 @@ export default function DeploymentsPage() {
           )}
         </section>
       </main>
+    </div>
+  );
+}
+
+interface ProjectCardProps {
+  project: Project;
+  hasActiveDeploymentLock: boolean;
+  isRedeployPending: boolean;
+  isAutoDeployUpdating: boolean;
+  onOpenProject: () => void;
+  onRedeploy: () => void;
+  onChangeVersion: () => void;
+  onDelete: () => void;
+  onToggleAutoDeploy: (checked: boolean) => void;
+}
+
+function ProjectCard({
+  project,
+  hasActiveDeploymentLock,
+  isRedeployPending,
+  isAutoDeployUpdating,
+  onOpenProject,
+  onRedeploy,
+  onChangeVersion,
+  onDelete,
+  onToggleAutoDeploy,
+}: ProjectCardProps) {
+  const { data: deploymentsData } = useGetDeployments(project._id);
+  const versionDeployments = (deploymentsData?.deployments || []) as
+    | VersionDeployment[]
+    | [];
+
+  const currentDeployment = useMemo(() => {
+    if (versionDeployments.length === 0) return null;
+
+    return (
+      versionDeployments.find(
+        (deployment) => deployment.version === project.currentVersion,
+      ) ||
+      [...versionDeployments].sort(
+        (left, right) => right.version - left.version,
+      )[0]
+    );
+  }, [versionDeployments, project.currentVersion]);
+
+  const currentCommitHash = shortHash(
+    getDeploymentCommitHash(currentDeployment),
+  );
+
+  return (
+    <div
+      className="group cursor-pointer rounded-3xl border border-border/60 bg-linear-to-br from-card/90 via-card/70 to-background/80 p-5 shadow-lg shadow-black/5 transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-xl hover:shadow-black/10"
+      onClick={onOpenProject}
+    >
+      <div className="space-y-4" onClick={(event) => event.stopPropagation()}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="rounded-2xl border border-border/70 bg-background/60 p-3 shadow-sm backdrop-blur">
+              <GitBranch className="size-5 text-muted-foreground" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-lg font-semibold text-foreground">
+                {project.name}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Project information and deployment controls
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+              v{project.currentVersion}
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs text-muted-foreground shadow-sm">
+              <span>Auto Deploy</span>
+              <Switch
+                checked={Boolean(project.autoDeploy)}
+                onCheckedChange={onToggleAutoDeploy}
+                aria-label={`Toggle auto deploy for ${project.name}`}
+                className={isAutoDeployUpdating ? "opacity-60" : undefined}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-border/60 bg-background/40 px-4 py-3">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/80">
+              Current Commit
+            </p>
+            <p className="mt-1 font-mono text-sm text-foreground">
+              {currentCommitHash}
+            </p>
+          </div>
+          <a
+            href={project.repoUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-border hover:bg-background/70 hover:text-foreground"
+          >
+            <FolderGit2 className="size-4 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/80">
+                Repository
+              </p>
+              <p className="truncate font-medium text-foreground">
+                {getDisplayHost(project.repoUrl)}
+              </p>
+            </div>
+            <ExternalLink className="ml-auto size-3 shrink-0 text-muted-foreground" />
+          </a>
+          <a
+            href={project.url}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/40 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-border hover:bg-background/70 hover:text-foreground"
+          >
+            <Globe className="size-4 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/80">
+                Live URL
+              </p>
+              <p className="truncate font-medium text-foreground">
+                {getDisplayHost(project.url)}
+              </p>
+            </div>
+            <ExternalLink className="ml-auto size-3 shrink-0 text-muted-foreground" />
+          </a>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-9 rounded-xl px-4"
+            onClick={onOpenProject}
+          >
+            Manage Project
+            <ArrowUpRight className="size-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-9 rounded-xl px-4"
+            onClick={onRedeploy}
+            disabled={hasActiveDeploymentLock || isRedeployPending}
+          >
+            {isRedeployPending ? "Redeploying..." : "Redeploy"}
+            <RefreshCw className="size-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-9 rounded-xl px-4 text-muted-foreground"
+            onClick={onChangeVersion}
+          >
+            Change Version
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-9 rounded-xl px-4 text-red-500 hover:text-red-400"
+            onClick={onDelete}
+          >
+            Delete Project
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

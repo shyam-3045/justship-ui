@@ -7,11 +7,13 @@ import {
   Shield,
   BarChart3,
   GitBranch,
+  Webhook,
+  Layers,
   Code2,
-  Sparkles,
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -19,7 +21,6 @@ import { PremiumCard } from "@/components/premium-card";
 import { FeatureCard } from "@/components/feature-card";
 import { SectionHeader } from "@/components/section-header";
 import { AnimatedCounter } from "@/components/animated-counter";
-import { ScrollReveal } from "@/components/scroll-reveal";
 import { fadeInUp, containerVariants } from "@/lib/animations";
 
 // Feature data
@@ -31,40 +32,34 @@ const features = [
       "Push your GitHub repo and watch it build, version, and go live automatically — no manual steps needed.",
   },
   {
-    icon: <Globe className="size-6" />,
-    title: "CloudFront CDN",
+    icon: <Webhook className="size-6" />,
+    title: "Webhook Integration",
     description:
-      "Your static files are served globally via AWS CloudFront for fast load times everywhere.",
-  },
-  {
-    icon: <Shield className="size-6" />,
-    title: "Isolated Docker Builds",
-    description:
-      "Every build runs inside a resource-limited Docker container, keeping your system safe and stable.",
+      "Per-project auto deploy via GitHub webhooks. New commits trigger deployments instantly with global in-app notifications.",
   },
   {
     icon: <GitBranch className="size-6" />,
-    title: "Version Control & Rollback",
+    title: "Version Control & Switch",
     description:
-      "Every deploy is versioned. Switch between versions or roll back to a previous build instantly.",
+      "Every release is versioned. Switch active versions from the dashboard without rebuilding the entire project.",
   },
   {
     icon: <BarChart3 className="size-6" />,
-    title: "Real-Time Build Logs",
+    title: "Real-Time Logs",
     description:
       "Watch your deployment logs live via WebSockets. Logs are persisted so you can review them anytime.",
   },
   {
-    icon: <Code2 className="size-6" />,
-    title: "Environment Variables",
+    icon: <Layers className="size-6" />,
+    title: "Global CDN Delivery",
     description:
-      "Store and manage project-level environment variables securely, injected directly into your builds.",
+      "Built assets are served from CloudFront edge locations for low latency worldwide and reliable static hosting.",
   },
   {
-    icon: <Sparkles className="size-6" />,
-    title: "AI Error Summaries",
+    icon: <Shield className="size-6" />,
+    title: "Environment Variables",
     description:
-      "When a deployment fails, get a quick AI summary of the full logs with clear root cause and fix steps.",
+      "Store project-level env values securely and inject them directly into Docker builds at deployment time.",
   },
 ];
 
@@ -138,6 +133,7 @@ export default function HomePage() {
             variants={fadeInUp}
             custom={0}
           >
+           
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -176,7 +172,8 @@ export default function HomePage() {
                 <ArrowRight className="size-4" />
               </Button>
             </Link>
-            <Button
+            <Link href="/about">
+              <Button
               size="lg"
               variant="ghost"
               className="gap-2 border border-border/60 text-foreground hover:bg-muted/60"
@@ -184,6 +181,7 @@ export default function HomePage() {
               View Architecture
               <Code2 className="size-4" />
             </Button>
+            </Link>
           </motion.div>
 
           {/* Floating Cards */}
@@ -204,7 +202,7 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="relative bg-gradient-to-b from-transparent via-muted/30 to-transparent px-6 py-20 md:py-32">
+      <section className="relative bg-linear-to-b from-transparent via-muted/30 to-transparent px-6 py-20 md:py-32">
         <div className="max-w-7xl mx-auto">
           <SectionHeader
             title="What JustShip Does"
@@ -256,14 +254,14 @@ export default function HomePage() {
               <motion.div key={index} variants={fadeInUp} custom={index}>
                 <div className="flex gap-6 md:gap-8">
                   {/* Step Number */}
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted font-bold text-foreground text-xl">
                       {step.number}
                     </div>
                   </div>
 
                   {/* Step Content */}
-                  <div className="flex-grow pt-2">
+                  <div className="grow pt-2">
                     <h3 className="text-2xl font-bold text-foreground mb-3">
                       {step.title}
                     </h3>
@@ -290,7 +288,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="relative bg-gradient-to-b from-transparent to-muted/30 px-6 py-20 md:py-32">
+      <section className="relative bg-linear-to-b from-transparent to-muted/30 px-6 py-20 md:py-32">
         <div className="max-w-7xl mx-auto">
           <motion.div
             className="grid md:grid-cols-3 gap-12"
@@ -320,7 +318,7 @@ export default function HomePage() {
           transition={{ duration: 0.3 }}
         >
           {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/10 to-foreground/5 blur-xl" />
+          <div className="absolute inset-0 bg-linear-to-r from-foreground/10 to-foreground/5 blur-xl" />
 
           <PremiumCard className="relative text-center py-16 md:py-20 px-8">
             <motion.div

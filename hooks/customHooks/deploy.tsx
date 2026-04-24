@@ -8,11 +8,12 @@ import {
 
 interface DeployPayload {
   url: string;
+  repoFullName: string;
   buildPath: string;
   env?: Record<string, string | number | boolean>;
   projectName: string;
   framework: string;
-  branch:string
+  branch: string;
 }
 
 export interface DeployResponse {
@@ -33,7 +34,6 @@ export interface LogsResponse {
 }
 
 export const useDeployProject = () => {
-
   return useMutation<DeployResponse, Error, DeployPayload>({
     mutationFn: (payload: DeployPayload) => deployProject(payload),
     onSuccess: () => console.log("Project Deployment Triggered !"),
