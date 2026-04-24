@@ -154,7 +154,10 @@ export default function ProjectDetailsPage() {
   const latestDeployment = useMemo(() => {
     if (deployments.length === 0) return null;
 
-    return [...deployments].sort((left, right) => right.version - left.version)[0] || null;
+    return (
+      [...deployments].sort((left, right) => right.version - left.version)[0] ||
+      null
+    );
   }, [deployments]);
 
   const displayBranch = project?.branch || latestDeployment?.branch || "-";
