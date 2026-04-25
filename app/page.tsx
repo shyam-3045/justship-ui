@@ -360,7 +360,7 @@ export default function HomePage() {
       <footer className="border-t border-border bg-background/70 py-12 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-sm text-muted-foreground mb-4">
-            © 2024 JustShip. Built by shyam, for real-world deployments.
+            © 2026 JustShip. Built by shyam, for real-world deployments.
           </p>
           <div className="flex justify-center gap-6 text-xs text-muted-foreground">
             <Link
