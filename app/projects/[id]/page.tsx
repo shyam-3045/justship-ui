@@ -65,11 +65,20 @@ type Deployment = {
 };
 
 type EnvRow = {
+  id: string;
   key: string;
   value: string;
 };
 
 const activeDeploymentJobKey = "justship-active-deployment-job";
+
+let envRowIdCounter = 0;
+
+const createEnvRow = (key = "", value = ""): EnvRow => ({
+  id: `env-row-${envRowIdCounter++}`,
+  key,
+  value,
+});
 
 const toHost = (url: string) => {
   if (!url) return "-";
@@ -107,10 +116,9 @@ const toEnvRows = (source: unknown): EnvRow[] => {
 
   if (!value || typeof value !== "object") return [];
 
-  return Object.entries(value as Record<string, unknown>).map(([key, val]) => ({
-    key,
-    value: typeof val === "string" ? val : String(val ?? ""),
-  }));
+  return Object.entries(value as Record<string, unknown>).map(([key, val]) =>
+    createEnvRow(key, typeof val === "string" ? val : String(val ?? "")),
+  );
 };
 
 const normalizeRows = (rows: EnvRow[]) =>
@@ -198,7 +206,7 @@ export default function ProjectDetailsPage() {
   };
 
   const addEnvRow = () => {
-    setEnvRows((prev) => [...prev, { key: "", value: "" }]);
+    setEnvRows((prev) => [...prev, createEnvRow()]);
   };
 
   const toggleEnvVisibility = (index: number) => {
@@ -458,7 +466,7 @@ export default function ProjectDetailsPage() {
                   </p>
                 ) : (
                   envRows.map((row, index) => (
-                    <div key={`${row.key}-${index}`} className="flex gap-2">
+                    <div key={row.id} className="flex gap-2">
                       <Input
                         value={row.key}
                         onChange={(event) =>
